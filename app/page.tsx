@@ -44,6 +44,38 @@ const getCustomTeamInfo = (username?: string, name?: string) => {
 };
 // ---------------------------------------
 
+// Helper per ottenere il codice nazione per le bandiere
+const getCountryCode = (country: string): string => {
+  const map: Record<string, string> = {
+    'Bahrain': 'bh',
+    'Saudi Arabia': 'sa',
+    'Australia': 'au',
+    'Japan': 'jp',
+    'China': 'cn',
+    'USA': 'us',
+    'United States': 'us',
+    'Miami': 'us',
+    'Italy': 'it',
+    'Monaco': 'mc',
+    'Canada': 'ca',
+    'Spain': 'es',
+    'Austria': 'at',
+    'UK': 'gb',
+    'Great Britain': 'gb',
+    'Hungary': 'hu',
+    'Belgium': 'be',
+    'Netherlands': 'nl',
+    'Singapore': 'sg',
+    'Azerbaijan': 'az',
+    'Qatar': 'qa',
+    'Mexico': 'mx',
+    'Brazil': 'br',
+    'UAE': 'ae',
+    'Abu Dhabi': 'ae'
+  };
+  return map[country] || 'un';
+};
+
 export default function FantaF1Dashboard() {
   const [activeTab, setActiveTab] = useState<'generale' | 'coppa' | 'calendario'>('generale');
   
@@ -399,18 +431,20 @@ export default function FantaF1Dashboard() {
         ) : activeTab === 'calendario' ? (
           <>
             <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-black text-[#F5A623] tracking-wider drop-shadow-sm">CALENDARIO UFFICIALE F1</h2>
-                <p className="text-sm text-slate-400 mt-1 uppercase tracking-wide">Tutte le gare della stagione in corso</p>
+              <div className="flex items-center gap-4">
+                <div>
+                  <h2 className="text-3xl font-black text-[#F5A623] tracking-wider drop-shadow-sm">CALENDARIO UFFICIALE F1</h2>
+                  <p className="text-sm text-slate-400 mt-1 uppercase tracking-wide">Tutte le gare della stagione in corso</p>
+                </div>
+                <button 
+                  onClick={fetchCalendar}
+                  disabled={calendarStatus === 'loading'}
+                  title="Sincronizza Calendario"
+                  className="p-2 rounded-full text-slate-400 hover:text-[#F5A623] hover:bg-[#1C2541] transition-all disabled:opacity-50 group focus:outline-none focus:ring-2 focus:ring-[#F5A623]/50 self-start mt-1"
+                >
+                  <RefreshCw className={`h-5 w-5 sm:h-6 sm:w-6 ${calendarStatus === 'loading' ? 'animate-spin text-[#F5A623]' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+                </button>
               </div>
-              <button 
-                onClick={fetchCalendar}
-                disabled={calendarStatus === 'loading'}
-                className="flex items-center justify-center bg-[#1C2541] text-[#F5A623] hover:bg-[#2A365C] px-5 py-2.5 rounded-none border border-[#F5A623] font-bold tracking-wide transition-all disabled:opacity-50 shadow-[0_0_10px_rgba(245,166,35,0.2)] hover:shadow-[0_0_15px_rgba(245,166,35,0.4)]"
-              >
-                <RefreshCw className={`h-5 w-5 ${calendarStatus === 'loading' ? 'animate-spin' : ''} mr-2`} />
-                <span>AGGIORNA</span>
-              </button>
             </div>
 
             {calendarStatus === 'error' && (
@@ -444,7 +478,16 @@ export default function FantaF1Dashboard() {
                       <div className={`absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 ${isPast ? 'border-slate-600' : 'border-[#F5A623]'}`}></div>
                       
                       <div className={`px-5 py-3 border-b ${isPast ? 'border-slate-700/50 bg-[#0B132B]/50' : 'border-[#F5A623]/30 bg-[#0B132B]'} flex justify-between items-center`}>
-                        <span className={`text-sm font-black tracking-widest ${isPast ? 'text-slate-500' : 'text-[#F5A623]'}`}>ROUND {race.round}</span>
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={`https://flagcdn.com/w40/${getCountryCode(race.Circuit.Location.country)}.png`}
+                            srcSet={`https://flagcdn.com/w80/${getCountryCode(race.Circuit.Location.country)}.png 2x`}
+                            alt={race.Circuit.Location.country}
+                            className={`w-6 h-4 object-cover rounded-[2px] shadow-sm ${isPast ? 'opacity-50 grayscale' : ''}`}
+                            loading="lazy"
+                          />
+                          <span className={`text-sm font-black tracking-widest ${isPast ? 'text-slate-500' : 'text-[#F5A623]'}`}>ROUND {race.round}</span>
+                        </div>
                         {isPast && <span className="text-xs font-bold text-slate-500 bg-slate-800 px-2 py-0.5 border border-slate-700">COMPLETATO</span>}
                       </div>
                       
@@ -500,17 +543,6 @@ export default function FantaF1Dashboard() {
                   {syncResult?.leagueName || 'PISTON LEAGUE'}
                 </h2>
               </div>
-              
-              <div className="flex-shrink-0 w-full sm:w-auto flex justify-center">
-                <button 
-                  onClick={handleSync}
-                  disabled={syncStatus === 'loading'}
-                  className="flex items-center justify-center bg-[#1C2541] text-[#F5A623] hover:bg-[#2A365C] px-4 py-3 sm:px-5 sm:py-2.5 rounded-none border border-[#F5A623] font-bold tracking-wide transition-all disabled:opacity-50 shadow-[0_0_10px_rgba(245,166,35,0.2)] hover:shadow-[0_0_15px_rgba(245,166,35,0.4)] w-full sm:w-auto"
-                >
-                  <RefreshCw className={`h-5 w-5 ${syncStatus === 'loading' ? 'animate-spin' : ''} mr-2`} />
-                  <span className="text-sm sm:text-base">AGGIORNA DATI</span>
-                </button>
-              </div>
             </div>
 
             {syncStatus === 'error' && (
@@ -522,14 +554,30 @@ export default function FantaF1Dashboard() {
 
             <div className="bg-[#1C2541] rounded-none shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-[#F5A623]/30 overflow-hidden max-w-4xl mx-auto relative">
               {/* Decorative corners */}
-              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#F5A623]"></div>
-              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#F5A623]"></div>
-              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#F5A623]"></div>
-              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#F5A623]"></div>
+              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#F5A623] z-30 pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#F5A623] z-30 pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#F5A623] z-30 pointer-events-none"></div>
+              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#F5A623] z-30 pointer-events-none"></div>
               
+              {/* Table Header with Refresh Button */}
+              <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 bg-[#0B132B] border-b border-[#F5A623]/30 relative z-20">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-[#F5A623]" />
+                  <h3 className="text-[#F5A623] font-black tracking-widest text-xs sm:text-sm uppercase">Classifica Generale</h3>
+                </div>
+                <button 
+                  onClick={handleSync}
+                  disabled={syncStatus === 'loading'}
+                  title="Sincronizza Classifica"
+                  className="p-2 -mr-2 rounded-full text-slate-400 hover:text-[#F5A623] hover:bg-[#1C2541] transition-all disabled:opacity-50 group focus:outline-none focus:ring-2 focus:ring-[#F5A623]/50"
+                >
+                  <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${syncStatus === 'loading' ? 'animate-spin text-[#F5A623]' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+                </button>
+              </div>
+
               <div className="overflow-x-hidden sm:overflow-x-auto relative">
                 <table className="w-full text-sm text-left text-slate-300 table-fixed sm:table-auto">
-                  <thead className="text-[10px] sm:text-xs text-[#F5A623] uppercase bg-[#0B132B] border-b border-[#F5A623]/30 tracking-wider sticky top-0 z-20 shadow-md">
+                  <thead className="text-[10px] sm:text-xs text-slate-400 uppercase bg-[#1C2541] border-b border-slate-700/50 tracking-wider sticky top-0 z-20">
                     <tr>
                       <th scope="col" className="px-1 py-3 sm:px-6 sm:py-5 w-12 sm:w-20 text-center font-black">Pos</th>
                       <th scope="col" className="px-2 py-3 sm:px-6 sm:py-5 font-black">Utente</th>
