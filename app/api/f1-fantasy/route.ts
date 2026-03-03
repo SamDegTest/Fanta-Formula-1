@@ -33,11 +33,17 @@ export async function GET(request: Request) {
     const buster = new Date().getTime();
     const apiUrl = `https://fantasy.formula1.com/feeds/leaderboard/privateleague/list_1_${LEAGUE_ID}_0_1.json?buster=${buster}`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondi di timeout
+
     try {
       const response = await fetch(apiUrl, {
         method: 'GET',
-        headers: F1_API_HEADERS
+        headers: F1_API_HEADERS,
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -117,14 +123,16 @@ export async function GET(request: Request) {
         raw_data: data 
       });
     } catch (fetchError: any) {
+      clearTimeout(timeoutId);
       if (
+        fetchError.name === 'AbortError' ||
         fetchError.code === 'ENOTFOUND' || 
         (fetchError.cause && fetchError.cause.code === 'ENOTFOUND') ||
         fetchError.message.includes('fetch failed')
       ) {
         return NextResponse.json({ 
-          error: "Errore di rete: Impossibile raggiungere l'API di F1 dal server.", 
-          details: "Il server in cui è ospitata l'app (Google Cloud) ha restrizioni DNS per questo dominio. Il fallback sul client verrà attivato.",
+          error: "Errore di rete: Impossibile raggiungere l'API di F1 dal server (Timeout o Blocco IP).", 
+          details: "Il server in cui è ospitata l'app (Google Cloud) ha restrizioni DNS o viene bloccato dai server di F1. Il fallback sul client verrà attivato.",
           isNetworkError: true,
           fallbackUrl: apiUrl
         }, { status: 502 });
