@@ -1,0 +1,5 @@
+{
+  "name": "Fanta F1 Custom Manager",
+  "description": "Web app for managing a private F1 Fantasy league with custom cup tournaments and aggregated team scoring.",
+  "requestFramePermissions": []
+}
