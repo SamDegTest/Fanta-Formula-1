@@ -96,6 +96,16 @@ export default function FantaF1Dashboard() {
     setSyncStatus('loading');
     setSyncResult(null);
 
+    // Carica i dati dalla cache se disponibili
+    try {
+      const cachedStandings = localStorage.getItem('f1_standings_cache');
+      if (cachedStandings) {
+        setRealStandings(JSON.parse(cachedStandings));
+      }
+    } catch (e) {
+      console.error("Errore lettura cache classifica", e);
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secondi di timeout
 
@@ -161,6 +171,7 @@ export default function FantaF1Dashboard() {
             });
             if (aggregated.length > 0) {
               setRealStandings([...aggregated]); // Forza un nuovo array per il re-render
+              localStorage.setItem('f1_fantasy_standings', JSON.stringify(aggregated));
             }
             return;
           } catch (clientErr: any) {
@@ -174,9 +185,28 @@ export default function FantaF1Dashboard() {
       setSyncResult(data);
       if (data.aggregated && data.aggregated.length > 0) {
         setRealStandings([...data.aggregated]); // Forza un nuovo array per il re-render
+        localStorage.setItem('f1_fantasy_standings', JSON.stringify(data.aggregated));
       }
     } catch (err: any) {
       clearTimeout(timeoutId);
+      
+      const cached = localStorage.getItem('f1_fantasy_standings');
+      if (cached) {
+        try {
+          const parsedCached = JSON.parse(cached);
+          setRealStandings(parsedCached);
+          setSyncStatus('success'); // Impostiamo a success per mostrare i dati
+          setSyncResult({ 
+            note: "ATTENZIONE: Impossibile aggiornare i dati in tempo reale. Mostro gli ultimi dati salvati in memoria.",
+            error: err.message,
+            aggregated: parsedCached
+          });
+          return;
+        } catch (e) {
+          // Fallback fallito
+        }
+      }
+
       setSyncStatus('error');
       if (err.name === 'AbortError') {
         setSyncResult({ error: "La richiesta ha impiegato troppo tempo (Timeout). Il server di F1 potrebbe bloccare le richieste." });
@@ -193,15 +223,33 @@ export default function FantaF1Dashboard() {
 
   const fetchCalendar = async () => {
     setCalendarStatus('loading');
+    
+    let hasCachedData = false;
+    // Carica i dati dalla cache se disponibili
+    try {
+      const cachedCalendar = localStorage.getItem('f1_calendar_cache');
+      if (cachedCalendar) {
+        setCalendarData(JSON.parse(cachedCalendar));
+        hasCachedData = true;
+      }
+    } catch (e) {
+      console.error("Errore lettura cache calendario", e);
+    }
+
     try {
       const res = await fetch('https://api.jolpi.ca/ergast/f1/current.json');
       if (!res.ok) throw new Error('Errore nel recupero del calendario');
       const data = await res.json();
       setCalendarData(data.MRData.RaceTable.Races);
+      localStorage.setItem('f1_calendar_cache', JSON.stringify(data.MRData.RaceTable.Races));
       setCalendarStatus('success');
     } catch (err) {
       console.error(err);
-      setCalendarStatus('error');
+      if (hasCachedData) {
+        setCalendarStatus('success'); // Se abbiamo i dati in cache, mostriamoli comunque
+      } else {
+        setCalendarStatus('error');
+      }
     }
   };
 
@@ -543,6 +591,13 @@ export default function FantaF1Dashboard() {
               <div className="mb-6 p-4 bg-red-900/50 border border-red-500 rounded-none text-red-200 text-sm">
                 <p className="font-bold mb-1 tracking-wide">ERRORE DI SINCRONIZZAZIONE</p>
                 <p>{syncResult?.error}</p>
+              </div>
+            )}
+
+            {syncResult?.note && (
+              <div className="mb-6 p-4 bg-yellow-900/30 border border-yellow-500/50 rounded-none text-yellow-200/80 text-sm">
+                <p className="font-bold mb-1 tracking-wide text-yellow-500">INFORMAZIONE</p>
+                <p>{syncResult.note}</p>
               </div>
             )}
 
