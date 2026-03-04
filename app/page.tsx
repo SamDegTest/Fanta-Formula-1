@@ -1,35 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Trophy, Users, Calendar, Settings, ChevronRight, TrendingUp, TrendingDown, Minus, RefreshCw, Bot, Zap, Shield, Shuffle, Infinity, Wrench } from 'lucide-react';
+import { Trophy, Users, Calendar, Settings, ChevronRight, TrendingUp, TrendingDown, Minus, RefreshCw, Bot, Zap, Shield, Shuffle, Infinity, Wrench, PieChart, ArrowRightLeft, Navigation } from 'lucide-react';
 
 // --- CONFIGURAZIONE SQUADRE STATICHE ---
 // Aggiungi qui le associazioni tra nome utente e nome/logo squadra personalizzato.
 // La chiave deve essere parte del nome utente o nome reale (tutto in minuscolo).
-const CUSTOM_TEAMS: Record<string, { name: string, logo: string, boosters?: Record<string, number> }> = {
+const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Record<string, number> }> = {
   "federico russo": {
-    name: "Avvocati Team",
-    logo: "https://picsum.photos/seed/avvocati/100/100", // Sostituisci con l'URL reale del logo
-    boosters: {
-      autopilot: 1, // Numero di volte usato (0, 1 o 2)
-      extra_drs: 2,
-      no_negative: 0,
-      wildcard: 0,
-      limitless: 0,
-      final_fix: 0
-    }
+    name: "AvvocatoSenior F1 team",
   },
-  // Esempio per aggiungere altre squadre:
-  // "mario rossi": { name: "Scuderia Ferrari", logo: "https://picsum.photos/seed/ferrari/100/100" }
+  "domenico ghionda": {
+    name: "Habibi motorsport F1 team",
+  },
+  "raul sisto": {
+    name: "Legione del centauro",
+  },
+  "elena russo": {
+    name: "Nenacrochet",
+  },
+  "gianluca tunzi": {
+    name: "Tunzi Hyperflux Racing",
+  }
 };
 
 const BOOSTER_TYPES = [
-  { id: 'autopilot', name: 'Autopilot', icon: Bot, color: 'text-blue-400', bg: 'bg-blue-400/20', border: 'border-blue-400/50' },
-  { id: 'extra_drs', name: 'Extra DRS', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-400/20', border: 'border-yellow-400/50' },
-  { id: 'no_negative', name: 'No Negative', icon: Shield, color: 'text-green-400', bg: 'bg-green-400/20', border: 'border-green-400/50' },
-  { id: 'wildcard', name: 'Wildcard', icon: Shuffle, color: 'text-purple-400', bg: 'bg-purple-400/20', border: 'border-purple-400/50' },
-  { id: 'limitless', name: 'Limitless', icon: Infinity, color: 'text-red-400', bg: 'bg-red-400/20', border: 'border-red-400/50' },
-  { id: 'final_fix', name: 'Final Fix', icon: Wrench, color: 'text-orange-400', bg: 'bg-orange-400/20', border: 'border-orange-400/50' }
+  { id: 'limitless', name: 'Limitless', icon: Infinity, color: 'text-blue-500', bg: 'bg-blue-500/20', border: 'border-blue-500/50' },
+  { id: 'wildcard', name: 'Wildcard', icon: Shuffle, color: 'text-red-600', bg: 'bg-red-600/20', border: 'border-red-600/50' },
+  { id: 'final_fix', name: 'Final Fix', icon: Wrench, color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
+  { id: 'autopilot', name: 'Auto Pilot', icon: Bot, color: 'text-teal-500', bg: 'bg-teal-500/20', border: 'border-teal-500/50' },
+  { id: 'no_negative', name: 'No Negative', icon: Shield, color: 'text-purple-500', bg: 'bg-purple-500/20', border: 'border-purple-500/50' },
+  { id: 'extra_drs', name: 'x3 Boost', icon: Zap, color: 'text-green-500', bg: 'bg-green-500/20', border: 'border-green-500/50' }
 ];
 
 const getCustomTeamInfo = (username?: string, name?: string) => {
@@ -89,23 +90,7 @@ export default function FantaF1Dashboard() {
   const [calendarStatus, setCalendarStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   
   // Settings State
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  
-  // Custom Logo State
-  const [customLogo, setCustomLogo] = useState<string | null>(null);
-
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        localStorage.setItem('leagueLogo', base64String);
-        setCustomLogo(base64String);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Disattivato
 
   const handleSync = async () => {
     setSyncStatus('loading');
@@ -132,7 +117,13 @@ export default function FantaF1Dashboard() {
             // Nota: Il client non può inviare facilmente header custom come Cookie a causa di CORS,
             // ma proviamo comunque la richiesta. L'utente dovrà usare un'estensione CORS.
             const clientRes = await fetch(data.fallbackUrl);
-            const clientData = await clientRes.json();
+            const clientText = await clientRes.text();
+            let clientData;
+            try {
+              clientData = JSON.parse(clientText);
+            } catch (e) {
+              throw new Error("L'API di F1 ha restituito HTML invece di JSON anche nel fallback client. Probabilmente i cookie sono scaduti o c'è un blocco Cloudflare.");
+            }
             
             // Applica la logica di aggregazione anche lato client
             let aggregated: any[] = [];
@@ -198,11 +189,6 @@ export default function FantaF1Dashboard() {
   // Carica i dati all'avvio
   useEffect(() => {
     handleSync();
-    // Carica il logo salvato se esiste
-    const savedLogo = localStorage.getItem('leagueLogo');
-    if (savedLogo) {
-      setCustomLogo(savedLogo);
-    }
   }, []);
 
   const fetchCalendar = async () => {
@@ -257,11 +243,13 @@ export default function FantaF1Dashboard() {
                 <span>CLASSIFICA GENERALE</span>
               </button>
               <button 
-                onClick={() => setActiveTab('coppa')}
-                className={`font-bold tracking-wide flex items-center space-x-2 pb-2 transition-all ${activeTab === 'coppa' ? 'text-[#F5A623] border-b-2 border-[#F5A623]' : 'text-slate-400 hover:text-slate-200'}`}
+                disabled
+                className="font-bold tracking-wide flex items-center space-x-2 pb-2 transition-all text-slate-600 cursor-not-allowed relative group"
+                title="Funzionalità in arrivo"
               >
-                <Trophy className="h-5 w-5" />
-                <span>COPPA</span>
+                <Trophy className="h-5 w-5 opacity-50" />
+                <span className="opacity-50">COPPA</span>
+                <span className="absolute -top-3 -right-6 bg-[#F5A623]/20 text-[#F5A623] text-[8px] px-1.5 py-0.5 rounded-sm border border-[#F5A623]/30 tracking-widest">PRESTO</span>
               </button>
               <button 
                 onClick={() => setActiveTab('calendario')}
@@ -272,8 +260,9 @@ export default function FantaF1Dashboard() {
               </button>
             </nav>
             <button 
-              onClick={() => setIsSettingsOpen(true)}
-              className="p-2 text-slate-400 hover:text-[#F5A623] transition-colors"
+              disabled
+              className="p-2 text-slate-600 cursor-not-allowed transition-colors"
+              title="Impostazioni disattivate"
             >
               <Settings className="h-6 w-6" />
             </button>
@@ -288,8 +277,9 @@ export default function FantaF1Dashboard() {
             {syncResult?.leagueName || 'PISTON LEAGUE'}
           </h1>
           <button 
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-2 text-slate-400 hover:text-[#F5A623] transition-colors"
+            disabled
+            className="p-2 text-slate-600 cursor-not-allowed transition-colors"
+            title="Impostazioni disattivate"
           >
             <Settings className="h-5 w-5" />
           </button>
@@ -462,7 +452,7 @@ export default function FantaF1Dashboard() {
                 </div>
               ) : calendarData.length === 0 ? (
                 <div className="col-span-full py-16 text-center text-slate-400 font-medium tracking-wide">
-                  NESSUN DATO DISPONIBILE. CLICCA SU "AGGIORNA".
+                  NESSUN DATO DISPONIBILE. CLICCA SU &quot;AGGIORNA&quot;.
                 </div>
               ) : (
                 calendarData.map((race, idx) => {
@@ -528,11 +518,15 @@ export default function FantaF1Dashboard() {
                   <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-[#F5A623] absolute z-0" />
                   
                   <img 
-                    src={customLogo || "/logo.png"} 
+                    src={`/api/drive-images?type=league&name=${encodeURIComponent(syncResult?.leagueName || 'PISTON LEAGUE')}`} 
                     alt="League Logo" 
                     className="h-full w-full object-cover relative z-10"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.src.includes('/api/drive-images')) {
+                        e.currentTarget.src = '/logo.png';
+                      } else {
+                        e.currentTarget.style.display = 'none';
+                      }
                     }}
                     onLoad={(e) => {
                       e.currentTarget.style.display = 'block';
@@ -596,7 +590,7 @@ export default function FantaF1Dashboard() {
                     ) : realStandings.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="px-6 py-16 text-center text-slate-400 font-medium tracking-wide text-sm">
-                          NESSUN DATO DISPONIBILE. CLICCA SU "AGGIORNA DATI".
+                          NESSUN DATO DISPONIBILE. CLICCA SU &quot;AGGIORNA DATI&quot;.
                         </td>
                       </tr>
                     ) : (
@@ -604,7 +598,7 @@ export default function FantaF1Dashboard() {
                         <tr key={idx} className="bg-[#1C2541] border-b border-[#F5A623]/10 hover:bg-[#2A365C] transition-colors group">
                           <td className="px-1 py-4 sm:px-6 sm:py-6 text-center font-medium">
                             <div className="flex items-center justify-center">
-                              <span className={`inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 font-black text-base sm:text-lg ${(row.rank || row.pos) === 1 ? 'bg-[#F5A623] text-[#0B132B] shadow-[0_0_15px_rgba(245,166,35,0.6)]' : (row.rank || row.pos) === 2 ? 'bg-slate-300 text-[#0B132B]' : (row.rank || row.pos) === 3 ? 'bg-[#CD7F32] text-[#0B132B]' : 'bg-[#0B132B] text-slate-400 border border-slate-700'}`}>
+                              <span className={`inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-sm sm:text-base transition-all duration-300 ${(row.rank || row.pos) === 1 ? 'bg-gradient-to-br from-[#F5A623] to-[#D35400] text-white shadow-[0_0_15px_rgba(245,166,35,0.4)] ring-2 ring-[#F5A623]/50' : (row.rank || row.pos) === 2 ? 'bg-gradient-to-br from-slate-300 to-slate-500 text-white shadow-[0_0_15px_rgba(203,213,225,0.3)] ring-2 ring-slate-300/50' : (row.rank || row.pos) === 3 ? 'bg-gradient-to-br from-[#CD7F32] to-[#8B4513] text-white shadow-[0_0_15px_rgba(205,127,50,0.3)] ring-2 ring-[#CD7F32]/50' : 'bg-[#0B132B]/50 text-slate-400 border border-slate-700/50 group-hover:border-slate-500/50 group-hover:text-slate-300'}`}>
                                 {row.rank || row.pos}
                               </span>
                             </div>
@@ -614,22 +608,23 @@ export default function FantaF1Dashboard() {
                               {(() => {
                                 const customInfo = getCustomTeamInfo(row.username, row.name);
                                 const teamName = customInfo ? customInfo.name : (row.teams ? row.teams.map((t: any) => t.name).join(' & ') : row.name);
-                                const logoUrl = customInfo ? customInfo.logo : null;
-                                const displayUser = row.username || row.name || "Utente Sconosciuto";
+                                const logoUrl = `/api/drive-images?type=team&name=${encodeURIComponent(teamName)}`;
                                 
                                 return (
                                   <>
-                                    {logoUrl && (
-                                      <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden border-2 border-[#F5A623]/50 bg-[#0B132B] shadow-[0_0_10px_rgba(245,166,35,0.2)]">
-                                        <img src={logoUrl} alt={teamName} className="h-full w-full object-cover" />
-                                      </div>
-                                    )}
-                                    <div className="flex flex-col min-w-0 w-full">
-                                      <span className="text-sm sm:text-base font-black text-white tracking-wide group-hover:text-[#F5A623] transition-colors line-clamp-2 break-words">
+                                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden border-2 border-[#F5A623]/50 bg-[#0B132B] shadow-[0_0_10px_rgba(245,166,35,0.2)]">
+                                      <img 
+                                        src={logoUrl} 
+                                        alt={teamName} 
+                                        className="h-full w-full object-cover" 
+                                        onError={(e) => {
+                                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(teamName)}&background=1C2541&color=F5A623`;
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="flex flex-col min-w-0 w-full justify-center">
+                                      <span className="text-sm sm:text-base font-bold text-white tracking-wide group-hover:text-[#F5A623] transition-colors line-clamp-2 break-words">
                                         {teamName}
-                                      </span>
-                                      <span className="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 uppercase tracking-wider font-semibold truncate w-full">
-                                        {displayUser}
                                       </span>
                                     </div>
                                   </>
@@ -723,11 +718,13 @@ export default function FantaF1Dashboard() {
             <span className="text-[10px] font-bold tracking-wider">CLASSIFICA</span>
           </button>
           <button 
-            onClick={() => setActiveTab('coppa')}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${activeTab === 'coppa' ? 'text-[#F5A623]' : 'text-slate-400 hover:text-slate-200'}`}
+            disabled
+            className="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors text-slate-600 cursor-not-allowed relative"
+            title="Funzionalità in arrivo"
           >
-            <Trophy className="h-5 w-5" />
-            <span className="text-[10px] font-bold tracking-wider">COPPA</span>
+            <Trophy className="h-5 w-5 opacity-50" />
+            <span className="text-[10px] font-bold tracking-wider opacity-50">COPPA</span>
+            <span className="absolute top-1 right-1/4 translate-x-1/2 bg-[#F5A623]/20 text-[#F5A623] text-[7px] px-1 py-[1px] rounded-sm border border-[#F5A623]/30 tracking-widest">PRESTO</span>
           </button>
           <button 
             onClick={() => setActiveTab('calendario')}
@@ -739,64 +736,6 @@ export default function FantaF1Dashboard() {
         </div>
       </nav>
 
-      {/* Settings Modal */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#0B132B] border border-[#F5A623]/50 shadow-[0_0_30px_rgba(245,166,35,0.2)] w-full max-w-md relative">
-            {/* Decorative corners */}
-            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#F5A623]"></div>
-            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#F5A623]"></div>
-            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#F5A623]"></div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#F5A623]"></div>
-            
-            <div className="px-6 py-4 border-b border-[#F5A623]/30 flex justify-between items-center">
-              <h3 className="text-xl font-black text-[#F5A623] tracking-widest">IMPOSTAZIONI</h3>
-              <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-300 mb-4 tracking-wide">LOGO DELLA LEGA</label>
-                <div className="flex items-center space-x-4">
-                  <div className="relative h-16 w-16 flex-shrink-0 flex items-center justify-center bg-[#1C2541] rounded-full border border-[#F5A623]/50 overflow-hidden">
-                    <Trophy className="h-6 w-6 text-[#F5A623] absolute z-0" />
-                    <img 
-                      src={customLogo || "/logo.png"} 
-                      alt="Current Logo" 
-                      className="h-full w-full object-cover relative z-10"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      onLoad={(e) => { e.currentTarget.style.display = 'block'; }}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="flex items-center justify-center w-full px-4 py-2 bg-[#1C2541] border border-[#F5A623]/50 text-[#F5A623] font-bold tracking-wide cursor-pointer hover:bg-[#2A365C] transition-colors text-sm text-center">
-                      <span>CARICA NUOVO LOGO</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleLogoUpload}
-                        className="hidden" 
-                      />
-                    </label>
-                    <p className="text-xs text-slate-500 mt-2">Formati supportati: JPG, PNG, GIF. Max 2MB.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="px-6 py-4 border-t border-[#F5A623]/30 bg-[#1C2541]/50 flex justify-end">
-              <button 
-                onClick={() => setIsSettingsOpen(false)}
-                className="px-6 py-2 bg-[#F5A623] text-[#0B132B] font-black tracking-widest hover:bg-[#FFB732] transition-colors"
-              >
-                CHIUDI
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

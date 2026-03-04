@@ -1,0 +1,103 @@
+import { google } from 'googleapis';
+import { NextRequest, NextResponse } from 'next/server';
+
+const TEAM_FOLDER_ID = '1xORwxcYHR7dSPn7sR4fZxMtozdvwbhcX';
+const LEAGUE_FOLDER_ID = '1SdNOJ8a8HvASb7ST1uesgbMWQSZMGeba';
+
+// Inizializza l'autenticazione Google
+const getAuth = () => {
+  try {
+    // Usa le variabili d'ambiente (raccomandato per produzione)
+    if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+      return new google.auth.GoogleAuth({
+        credentials: {
+          client_email: process.env.GOOGLE_CLIENT_EMAIL,
+          private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        },
+        scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+      });
+    }
+    
+    console.warn("Attenzione: Variabili d'ambiente GOOGLE_CLIENT_EMAIL o GOOGLE_PRIVATE_KEY mancanti.");
+    return null;
+  } catch (error) {
+    console.error("Errore di inizializzazione Google Auth:", error);
+    return null;
+  }
+};
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const type = searchParams.get('type'); // 'team' | 'league'
+  const name = searchParams.get('name');
+
+  if (!type || !name) {
+    return new NextResponse('Missing type or name', { status: 400 });
+  }
+
+  const folderId = type === 'team' ? TEAM_FOLDER_ID : LEAGUE_FOLDER_ID;
+  
+  // Determina il nome del file atteso in base alle regole richieste
+  let expectedNameBase = '';
+  if (type === 'league') {
+    // Lega: tutto minuscolo, spazi sostituiti da underscore (es. "Piston Cup" -> piston_cup)
+    expectedNameBase = name.trim().toLowerCase().replace(/\s+/g, '_');
+  } else {
+    // Squadra: sostituisce gli spazi con underscore (es. "AvvocatoSenior F1 team" -> "AvvocatoSenior_F1_team")
+    expectedNameBase = name.trim().replace(/\s+/g, '_');
+  }
+
+  const auth = getAuth();
+  if (!auth) {
+    return new NextResponse('Auth configuration missing', { status: 500 });
+  }
+
+  try {
+    const drive = google.drive({ version: 'v3', auth });
+    
+    // Cerca tutti i file nella cartella per permettere un match case-insensitive
+    const res = await drive.files.list({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields: 'files(id, name, mimeType)',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+    });
+
+    const files = res.data.files || [];
+    
+    // Ricerca case-insensitive ignorando l'estensione
+    const file = files.find(f => {
+      if (!f.name) return false;
+      const fileNameWithoutExt = f.name.substring(0, f.name.lastIndexOf('.')) || f.name;
+      return fileNameWithoutExt.toLowerCase() === expectedNameBase.toLowerCase();
+    });
+
+    if (!file || !file.id) {
+      // Ritorna 404 così il frontend può usare l'immagine di fallback (onError)
+      return new NextResponse('Image not found', { status: 404 });
+    }
+
+    // Recupera lo stream del file da Google Drive
+    const fileResponse = await drive.files.get(
+      { fileId: file.id, alt: 'media', supportsAllDrives: true },
+      { responseType: 'arraybuffer' }
+    );
+
+    // Determina il Content-Type in base al mimeType o all'estensione
+    let contentType = file.mimeType || 'image/jpeg';
+    if (file.name?.toLowerCase().endsWith('.png')) contentType = 'image/png';
+    else if (file.name?.toLowerCase().endsWith('.webp')) contentType = 'image/webp';
+
+    // Restituisce l'immagine al client
+    return new NextResponse(fileResponse.data as ArrayBuffer, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+      },
+    });
+
+  } catch (error: any) {
+    console.error('Drive API Error:', error.message);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}

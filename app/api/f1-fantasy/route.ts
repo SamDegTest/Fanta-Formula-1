@@ -54,7 +54,18 @@ export async function GET(request: Request) {
         );
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("F1 API non ha restituito JSON valido. Risposta:", responseText.substring(0, 200) + "...");
+        return NextResponse.json(
+          { error: "L'API di F1 ha restituito un formato non valido (probabilmente HTML invece di JSON). Controlla i cookie o l'autenticazione." }, 
+          { status: 502 }
+        );
+      }
       
       // Aggregazione automatica basata sulla nuova struttura
       let aggregatedLeaderboard: any[] = [];
