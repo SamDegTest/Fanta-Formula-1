@@ -37,6 +37,9 @@ const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Rec
   },
   "Piergiorgio Tunzi":{
     name: "Alette"
+  },
+  "Francesco Tullo":{
+    name: "MERDECESS AMG FORMULA 1 TEAM"
   }
 };
 
