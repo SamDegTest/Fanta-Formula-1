@@ -560,6 +560,35 @@ export default function FantaF1Dashboard() {
           </>
         ) : (
           <>
+            {syncResult?.isDemoMode && (
+              <div className="mb-8 p-6 bg-amber-900/40 border-2 border-amber-500 rounded-none shadow-[0_0_20px_rgba(245,158,11,0.2)] relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Settings className="h-24 w-24 -mr-8 -mt-8 rotate-12" />
+                </div>
+                <div className="flex items-start gap-4 relative z-10">
+                  <div className="p-3 bg-amber-500 rounded-full text-amber-950">
+                    <Shield className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-amber-500 tracking-wider uppercase mb-1">Modalità Demo Attiva</h3>
+                    <p className="text-amber-200/80 text-sm leading-relaxed">
+                      L&apos;applicazione sta mostrando <strong>dati di esempio</strong> perché la variabile d&apos;ambiente <code className="bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-500/30">F1_API_COOKIE</code> non è stata configurata.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <a 
+                        href="https://fantasy.formula1.com" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs font-black bg-amber-500 text-amber-950 px-4 py-2 hover:bg-white transition-colors tracking-widest uppercase"
+                      >
+                        Recupera Cookie
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mb-8 md:mb-10 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 text-center sm:text-left">
                 <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 flex items-center justify-center bg-[#1C2541] rounded-full border-2 border-[#F5A623]/50 overflow-hidden shadow-[0_0_25px_rgba(245,166,35,0.3)]">

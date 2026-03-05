@@ -7,7 +7,16 @@ const LEAGUE_FOLDER_ID = '1SdNOJ8a8HvASb7ST1uesgbMWQSZMGeba';
 // Inizializza l'autenticazione Google
 const getAuth = () => {
   try {
-    // Usa le variabili d'ambiente (raccomandato per produzione)
+    // 1. Prova a leggere il JSON completo dalla variabile d'ambiente (Netlify/Prod)
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+      return new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+      });
+    }
+
+    // 2. Fallback: Prova a leggere le singole variabili (Legacy/Local)
     if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
       return new google.auth.GoogleAuth({
         credentials: {
@@ -18,7 +27,7 @@ const getAuth = () => {
       });
     }
     
-    console.warn("Attenzione: Variabili d'ambiente GOOGLE_CLIENT_EMAIL o GOOGLE_PRIVATE_KEY mancanti.");
+    console.error("ERRORE CRITICO: Credenziali Google Drive mancanti (GOOGLE_APPLICATION_CREDENTIALS_JSON).");
     return null;
   } catch (error) {
     console.error("Errore di inizializzazione Google Auth:", error);
