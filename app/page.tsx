@@ -26,7 +26,10 @@ const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Rec
     name: "Beavers"
   },
   "Luca Siciliani":{
-    name: "MAZESPIN F1 TEAM"
+    name: "Scuderia Sbinnati"
+  },
+  "Valerio Maniscalco":{
+    name: "Speed and Power"
   }
 };
 
