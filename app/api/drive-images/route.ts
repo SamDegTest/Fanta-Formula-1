@@ -147,9 +147,10 @@ export async function GET(request: NextRequest) {
     return new NextResponse(fileResponse.data as ArrayBuffer, {
       headers: {
         'Content-Type': contentType,
-        // Cache intelligente: 1 ora di freschezza assoluta, poi aggiornamento in background (stale-while-revalidate)
-        // Questo evita il ricaricamento continuo delle immagini mantenendo comunque gli aggiornamenti
-        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+        // Disabilita completamente la cache per questa rotta per risolvere i problemi in produzione.
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
     });
 

@@ -428,7 +428,7 @@ export default function FantaF1Dashboard() {
                   <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-[#F5A623] absolute z-0" />
                   
                   <Image 
-                    src={`/api/drive-images?type=league&name=${encodeURIComponent(syncResult?.leagueName || 'PISTON LEAGUE')}`} 
+                    src={`/api/drive-images?type=league&name=${encodeURIComponent(syncResult?.leagueName || 'PISTON LEAGUE')}&v=${syncResult?.lastUpdated || 1}`} 
                     alt="League Logo" 
                     fill
                     sizes="(max-width: 640px) 80px, 96px"
@@ -523,7 +523,7 @@ export default function FantaF1Dashboard() {
                               {(() => {
                                 const customInfo = getCustomTeamInfo(row.username, row.name);
                                 const teamName = customInfo ? customInfo.name : (row.teams ? row.teams.map((t: any) => t.name).join(' & ') : row.name);
-                                const logoUrl = `/api/drive-images?type=team&name=${encodeURIComponent(teamName)}`;
+                                const logoUrl = `/api/drive-images?type=team&name=${encodeURIComponent(teamName)}&v=${row.rank || idx}`;
                                 
                                 return (
                                   <>
