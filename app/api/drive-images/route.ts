@@ -45,16 +45,6 @@ export async function GET(request: NextRequest) {
   }
 
   const folderId = type === 'team' ? TEAM_FOLDER_ID : LEAGUE_FOLDER_ID;
-  
-  // Determina il nome del file atteso in base alle regole richieste
-  let expectedNameBase = '';
-  if (type === 'league') {
-    // Lega: tutto minuscolo, spazi sostituiti da underscore (es. "Piston Cup" -> piston_cup)
-    expectedNameBase = name.trim().toLowerCase().replace(/\s+/g, '_');
-  } else {
-    // Squadra: sostituisce gli spazi con underscore (es. "AvvocatoSenior F1 team" -> "AvvocatoSenior_F1_team")
-    expectedNameBase = name.trim().replace(/\s+/g, '_');
-  }
 
   const auth = getAuth();
   if (!auth) {
@@ -70,15 +60,30 @@ export async function GET(request: NextRequest) {
       fields: 'files(id, name, mimeType)',
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
+      pageSize: 1000,
     });
 
     const files = res.data.files || [];
     
+    // Normalizzazione del nome per il confronto
+    const nameTrimmed = name.trim();
+    
+    // Strategia 1: Sostituzione semplice spazi -> underscore (es. "Team A" -> "Team_A")
+    const strategySimple = nameTrimmed.replace(/\s+/g, '_');
+    
+    // Strategia 2: Sanitizzazione completa (es. "Team A & B" -> "Team_A_B")
+    // Rimuove caratteri speciali e gestisce underscore multipli
+    const strategySanitized = nameTrimmed.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+
     // Ricerca case-insensitive ignorando l'estensione
     const file = files.find(f => {
       if (!f.name) return false;
       const fileNameWithoutExt = f.name.substring(0, f.name.lastIndexOf('.')) || f.name;
-      return fileNameWithoutExt.toLowerCase() === expectedNameBase.toLowerCase();
+      const fNameLower = fileNameWithoutExt.toLowerCase();
+      
+      // Cerca corrispondenza con una delle strategie
+      return fNameLower === strategySimple.toLowerCase() || 
+             fNameLower === strategySanitized.toLowerCase();
     });
 
     if (!file || !file.id) {
