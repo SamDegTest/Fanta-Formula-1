@@ -9,7 +9,15 @@ const getAuth = () => {
   try {
     // 1. Prova a leggere il JSON completo dalla variabile d'ambiente (Netlify/Prod)
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+      let jsonContent = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.trim();
+      
+      // Fix: Rimuove apici singoli o doppi se l'utente li ha inclusi nella stringa (errore comune .env)
+      if ((jsonContent.startsWith("'") && jsonContent.endsWith("'")) || 
+          (jsonContent.startsWith('"') && jsonContent.endsWith('"'))) {
+        jsonContent = jsonContent.slice(1, -1);
+      }
+
+      const credentials = JSON.parse(jsonContent);
       return new google.auth.GoogleAuth({
         credentials,
         scopes: ['https://www.googleapis.com/auth/drive.readonly'],
