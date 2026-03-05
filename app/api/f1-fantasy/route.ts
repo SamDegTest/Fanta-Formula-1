@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Forza la route ad essere dinamica per evitare che Next.js la "congeli" (Static Generation)
+export const dynamic = 'force-dynamic';
+
 const LEAGUE_ID = process.env.LEAGUE_ID;
 
 // VARIABILE GLOBALE PER GLI HEADERS
@@ -170,7 +173,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Errore interno del server", details: error.message }, { status: 500 });
   }
 }
-
-
-
-
