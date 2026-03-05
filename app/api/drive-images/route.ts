@@ -1,6 +1,9 @@
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Forza la route ad essere dinamica per evitare che Next.js la "congeli" (Static Generation)
+export const dynamic = 'force-dynamic';
+
 const TEAM_FOLDER_ID = process.env.TEAM_FOLDER_ID;
 const LEAGUE_FOLDER_ID = process.env.LEAGUE_FOLDER_ID;
 
@@ -68,6 +71,8 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Auth configuration missing', { status: 500 });
   }
 
+  console.log(`[DRIVE-API] Richiesta: Type=${type}, Name="${name}"`);
+
   try {
     const drive = google.drive({ version: 'v3', auth });
     
@@ -96,6 +101,8 @@ export async function GET(request: NextRequest) {
     // Utile se il file su Drive ha gli spazi invece degli underscore
     const strategyOriginal = nameTrimmed;
 
+    console.log(`[DRIVE-API] Cerco match per: "${strategySimple}" OPPURE "${strategySanitized}" OPPURE "${strategyOriginal}"`);
+
     // Ricerca case-insensitive ignorando l'estensione
     const file = files.find(f => {
       if (!f.name) return false;
@@ -109,6 +116,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!file || !file.id) {
+      console.log(`[DRIVE-API] Nessun file trovato per "${name}".`);
       // Ritorna 404 così il frontend può usare l'immagine di fallback (onError)
       return new NextResponse('Image not found', { status: 404 });
     }
@@ -124,11 +132,15 @@ export async function GET(request: NextRequest) {
     if (file.name?.toLowerCase().endsWith('.png')) contentType = 'image/png';
     else if (file.name?.toLowerCase().endsWith('.webp')) contentType = 'image/webp';
 
+    console.log(`[DRIVE-API] Trovato file: "${file.name}" (${file.id}). Invio immagine.`);
+
     // Restituisce l'immagine al client
     return new NextResponse(fileResponse.data as ArrayBuffer, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
     });
 
