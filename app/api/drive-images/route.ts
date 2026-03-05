@@ -17,7 +17,16 @@ const getAuth = () => {
         jsonContent = jsonContent.slice(1, -1);
       }
 
-      const credentials = JSON.parse(jsonContent);
+      let credentials;
+      try {
+        credentials = JSON.parse(jsonContent);
+      } catch (e) {
+        console.error("Errore parsing JSON credenziali. Tentativo di pulizia...", e);
+        // Tentativo estremo: a volte i copy-paste inseriscono caratteri di escape errati
+        const sanitized = jsonContent.replace(/\\n/g, '\n');
+        credentials = JSON.parse(sanitized);
+      }
+
       return new google.auth.GoogleAuth({
         credentials,
         scopes: ['https://www.googleapis.com/auth/drive.readonly'],
@@ -83,6 +92,10 @@ export async function GET(request: NextRequest) {
     // Rimuove caratteri speciali e gestisce underscore multipli
     const strategySanitized = nameTrimmed.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
 
+    // Strategia 3: Nome originale (es. "Piston League" -> "piston league")
+    // Utile se il file su Drive ha gli spazi invece degli underscore
+    const strategyOriginal = nameTrimmed;
+
     // Ricerca case-insensitive ignorando l'estensione
     const file = files.find(f => {
       if (!f.name) return false;
@@ -91,7 +104,8 @@ export async function GET(request: NextRequest) {
       
       // Cerca corrispondenza con una delle strategie
       return fNameLower === strategySimple.toLowerCase() || 
-             fNameLower === strategySanitized.toLowerCase();
+             fNameLower === strategySanitized.toLowerCase() ||
+             fNameLower === strategyOriginal.toLowerCase();
     });
 
     if (!file || !file.id) {

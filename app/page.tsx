@@ -30,6 +30,9 @@ const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Rec
   },
   "Valerio Maniscalco":{
     name: "Speed and Power"
+  },
+  "Christian Busco":{
+    name: "Dinoco_F1_team"
   }
 };
 
