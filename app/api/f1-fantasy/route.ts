@@ -2,75 +2,6 @@ import { NextResponse } from 'next/server';
 
 const LEAGUE_ID = process.env.LEAGUE_ID || '5525807';
 
-// DATI MOCK PER MODALITÀ DEMO
-const DEMO_DATA = {
-  success: true,
-  isDemo: true,
-  leagueName: "PISTON LEAGUE (DEMO)",
-  aggregated: [
-    {
-      rank: 1,
-      username: "Domenico Ghionda",
-      totalScore: 452.5,
-      teamsCount: 2,
-      teams: [
-        { name: "Habibi motorsport F1 team", score: 230.5, team_no: 1 },
-        { name: "Habibi B-Team", score: 222, team_no: 2 }
-      ]
-    },
-    {
-      rank: 2,
-      username: "Federico Russo",
-      totalScore: 438.0,
-      teamsCount: 2,
-      teams: [
-        { name: "AvvocatoSenior F1 team", score: 225, team_no: 1 },
-        { name: "Senior Junior Team", score: 213, team_no: 2 }
-      ]
-    },
-    {
-      rank: 3,
-      username: "Raul Sisto",
-      totalScore: 415.5,
-      teamsCount: 2,
-      teams: [
-        { name: "Legione del centauro", score: 210.5, team_no: 1 },
-        { name: "Centauro II", score: 205, team_no: 2 }
-      ]
-    },
-    {
-      rank: 4,
-      username: "Gianluca Tunzi",
-      totalScore: 398.0,
-      teamsCount: 2,
-      teams: [
-        { name: "Tunzi Hyperflux Racing", score: 200, team_no: 1 },
-        { name: "Hyperflux Evo", score: 198, team_no: 2 }
-      ]
-    },
-    {
-      rank: 5,
-      username: "Elena Russo",
-      totalScore: 385.5,
-      teamsCount: 2,
-      teams: [
-        { name: "Nenacrochet", score: 195.5, team_no: 1 },
-        { name: "Crochet Speed", score: 190, team_no: 2 }
-      ]
-    },
-    {
-      rank: 6,
-      username: "Samuele De Giosa",
-      totalScore: 370.0,
-      teamsCount: 2,
-      teams: [
-        { name: "Samu Racing", score: 185, team_no: 1 },
-        { name: "De Giosa F1", score: 185, team_no: 2 }
-      ]
-    }
-  ]
-};
-
 // VARIABILE GLOBALE PER GLI HEADERS
 // Modifica questa variabile se la chiamata API smette di funzionare
 const getF1Headers = () => {
@@ -102,8 +33,13 @@ export async function GET(request: Request) {
     const headers = getF1Headers();
     
     if (!headers.cookie) {
-      console.warn("F1_API_COOKIE non configurato. Restituisco dati DEMO.");
-      return NextResponse.json(DEMO_DATA);
+      return NextResponse.json(
+        { 
+          error: "Configurazione mancante: F1_API_COOKIE non trovato nelle variabili d'ambiente.",
+          needsConfig: true 
+        }, 
+        { status: 401 }
+      );
     }
 
     // Nuovo endpoint per la classifica della lega privata

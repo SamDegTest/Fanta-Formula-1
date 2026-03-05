@@ -96,21 +96,30 @@ export default function FantaF1Dashboard() {
     setSyncStatus('loading');
     setSyncResult(null);
 
-    // Carica i dati dalla cache se disponibili
+    // Carica i dati dalla cache se disponibili all'inizio per evitare flash di vuoto
     try {
-      const cachedStandings = localStorage.getItem('f1_standings_cache');
-      if (cachedStandings) {
-        setRealStandings(JSON.parse(cachedStandings));
+      const cached = localStorage.getItem('f1_fantasy_standings');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.aggregated) {
+          setRealStandings(parsed.aggregated);
+          // Se abbiamo dati in cache, li mostriamo subito come "success" temporaneo
+          // ma continuiamo il caricamento in background
+          setSyncResult({ 
+            leagueName: parsed.leagueName,
+            isCached: true,
+            lastUpdated: parsed.lastUpdated
+          });
+        }
       }
     } catch (e) {
       console.error("Errore lettura cache classifica", e);
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secondi di timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-      // Tentativo tramite Proxy Serverless
       const res = await fetch('/api/f1-fantasy', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -121,71 +130,19 @@ export default function FantaF1Dashboard() {
       const data = await res.json();
       
       if (!res.ok) {
-        if (data.isNetworkError && data.fallbackUrl) {
-          // Fallback: Tentativo di chiamata diretta dal client (potrebbe fallire per CORS)
-          try {
-            // Nota: Il client non può inviare facilmente header custom come Cookie a causa di CORS,
-            // ma proviamo comunque la richiesta. L'utente dovrà usare un'estensione CORS.
-            const clientRes = await fetch(data.fallbackUrl);
-            const clientText = await clientRes.text();
-            let clientData;
-            try {
-              clientData = JSON.parse(clientText);
-            } catch (e) {
-              throw new Error("L'API di F1 ha restituito HTML invece di JSON anche nel fallback client. Probabilmente i cookie sono scaduti o c'è un blocco Cloudflare.");
-            }
-            
-            // Applica la logica di aggregazione anche lato client
-            let aggregated: any[] = [];
-            const teams = clientData.Value?.leaderboard || clientData.Data?.Value || clientData.teams || clientData.list || (Array.isArray(clientData) ? clientData : []);
-            
-            if (teams && teams.length > 0) {
-              const usersMap: Record<string, any> = {};
-              teams.forEach((team: any) => {
-                const teamName = team.team_name ? decodeURIComponent(team.team_name) : `Team ${team.team_no || ''}`;
-                
-                // REGOLA FISSA: Ignora sempre la squadra Admin_001
-                if (teamName === 'Admin_001') {
-                  return;
-                }
-
-                const username = team.user_name || 'Sconosciuto';
-                const score = parseFloat(team.cur_points || team.score || team.points || team.total_points || '0') || 0;
-                
-                if (!usersMap[username]) {
-                  usersMap[username] = { username, totalScore: 0, teamsCount: 0, teams: [] };
-                }
-                usersMap[username].totalScore += score;
-                usersMap[username].teamsCount += 1;
-                usersMap[username].teams.push({ name: teamName, score, team_no: team.team_no });
-              });
-              aggregated = Object.values(usersMap).sort((a: any, b: any) => b.totalScore - a.totalScore);
-              aggregated.forEach((user, index) => { user.rank = index + 1; });
-            }
-
-            setSyncStatus('success');
-            setSyncResult({ 
-              note: "Dati recuperati direttamente dal browser (bypassando il server)",
-              aggregated: aggregated,
-              raw_data: clientData 
-            });
-            if (aggregated.length > 0) {
-              setRealStandings([...aggregated]); // Forza un nuovo array per il re-render
-              localStorage.setItem('f1_fantasy_standings', JSON.stringify(aggregated));
-            }
-            return;
-          } catch (clientErr: any) {
-            throw new Error(`Il server cloud è bloccato e il tuo browser blocca la richiesta per CORS. Errore: ${clientErr.message}. Soluzione: Usa un'estensione per disabilitare CORS nel browser temporaneamente.`);
-          }
-        }
         throw new Error(data.error || 'Errore durante la sincronizzazione');
       }
       
       setSyncStatus('success');
       setSyncResult(data);
       if (data.aggregated && data.aggregated.length > 0) {
-        setRealStandings([...data.aggregated]); // Forza un nuovo array per il re-render
-        localStorage.setItem('f1_fantasy_standings', JSON.stringify(data.aggregated));
+        setRealStandings([...data.aggregated]);
+        // Salva in cache con timestamp
+        localStorage.setItem('f1_fantasy_standings', JSON.stringify({
+          aggregated: data.aggregated,
+          leagueName: data.leagueName,
+          lastUpdated: new Date().toISOString()
+        }));
       }
     } catch (err: any) {
       clearTimeout(timeoutId);
@@ -193,26 +150,23 @@ export default function FantaF1Dashboard() {
       const cached = localStorage.getItem('f1_fantasy_standings');
       if (cached) {
         try {
-          const parsedCached = JSON.parse(cached);
-          setRealStandings(parsedCached);
-          setSyncStatus('success'); // Impostiamo a success per mostrare i dati
+          const parsed = JSON.parse(cached);
+          setRealStandings(parsed.aggregated);
+          setSyncStatus('success');
           setSyncResult({ 
-            note: "ATTENZIONE: Impossibile aggiornare i dati in tempo reale. Mostro gli ultimi dati salvati in memoria.",
+            note: "Impossibile aggiornare i dati. Mostro gli ultimi dati salvati.",
             error: err.message,
-            aggregated: parsedCached
+            aggregated: parsed.aggregated,
+            leagueName: parsed.leagueName,
+            lastUpdated: parsed.lastUpdated,
+            isOffline: true
           });
           return;
-        } catch (e) {
-          // Fallback fallito
-        }
+        } catch (e) {}
       }
 
       setSyncStatus('error');
-      if (err.name === 'AbortError') {
-        setSyncResult({ error: "La richiesta ha impiegato troppo tempo (Timeout). Il server di F1 potrebbe bloccare le richieste." });
-      } else {
-        setSyncResult({ error: err.message });
-      }
+      setSyncResult({ error: err.message });
     }
   };
 
@@ -560,30 +514,30 @@ export default function FantaF1Dashboard() {
           </>
         ) : (
           <>
-            {syncResult?.isDemoMode && (
-              <div className="mb-8 p-6 bg-amber-900/40 border-2 border-amber-500 rounded-none shadow-[0_0_20px_rgba(245,158,11,0.2)] relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Settings className="h-24 w-24 -mr-8 -mt-8 rotate-12" />
+            {syncResult?.isOffline && (
+              <div className="mb-8 p-4 bg-blue-900/30 border border-blue-500/50 rounded-none text-blue-200 text-sm flex items-center gap-3">
+                <div className="p-2 bg-blue-500 rounded-full text-blue-950">
+                  <RefreshCw className="h-4 w-4" />
                 </div>
-                <div className="flex items-start gap-4 relative z-10">
-                  <div className="p-3 bg-amber-500 rounded-full text-amber-950">
+                <div>
+                  <p className="font-bold uppercase tracking-wider">Modalità Offline / Cache</p>
+                  <p className="opacity-80">Impossibile connettersi all&apos;API. Sto mostrando i dati salvati il {syncResult.lastUpdated ? new Date(syncResult.lastUpdated).toLocaleString('it-IT') : 'data sconosciuta'}.</p>
+                </div>
+              </div>
+            )}
+
+            {!syncResult?.aggregated && syncStatus === 'error' && (
+              <div className="mb-8 p-6 bg-red-900/40 border-2 border-red-500 rounded-none shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-red-500 rounded-full text-red-950">
                     <Shield className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-amber-500 tracking-wider uppercase mb-1">Modalità Demo Attiva</h3>
-                    <p className="text-amber-200/80 text-sm leading-relaxed">
-                      L&apos;applicazione sta mostrando <strong>dati di esempio</strong> perché la variabile d&apos;ambiente <code className="bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-500/30">F1_API_COOKIE</code> non è stata configurata.
+                    <h3 className="text-xl font-black text-red-500 tracking-wider uppercase mb-1">Configurazione Richiesta</h3>
+                    <p className="text-red-200/80 text-sm leading-relaxed">
+                      L&apos;applicazione non ha dati salvati e non riesce a connettersi all&apos;API di F1. 
+                      Assicurati che la variabile d&apos;ambiente <code className="bg-red-950/50 px-1.5 py-0.5 rounded border border-red-500/30">F1_API_COOKIE</code> sia configurata correttamente.
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <a 
-                        href="https://fantasy.formula1.com" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-xs font-black bg-amber-500 text-amber-950 px-4 py-2 hover:bg-white transition-colors tracking-widest uppercase"
-                      >
-                        Recupera Cookie
-                      </a>
-                    </div>
                   </div>
                 </div>
               </div>
