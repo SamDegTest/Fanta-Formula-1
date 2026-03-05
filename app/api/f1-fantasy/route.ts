@@ -149,6 +149,11 @@ export async function GET(request: Request) {
         leagueName: leagueName,
         aggregated: aggregatedLeaderboard,
         raw_data: data 
+      }, {
+        headers: {
+          // Cache CDN: 60 secondi di freschezza assoluta, poi serve dati "vecchi" per 5 minuti mentre aggiorna in background
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+        }
       });
     } catch (fetchError: any) {
       clearTimeout(timeoutId);

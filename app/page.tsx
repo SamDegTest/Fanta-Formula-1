@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Trophy, Users, Calendar, Settings, ChevronRight, TrendingUp, TrendingDown, Minus, RefreshCw, Bot, Zap, Shield, Shuffle, Infinity, Wrench, PieChart, ArrowRightLeft, Navigation } from 'lucide-react';
 
 // --- CONFIGURAZIONE SQUADRE STATICHE ---
@@ -233,19 +234,6 @@ export default function FantaF1Dashboard() {
     }
   }, [activeTab]);
 
-  // Dati mock per la classifica a gironi (da sostituire poi)
-  const groupStandings = [
-    { pos: 1, name: "Mario Rossi", pti: 9, g: 3, v: 3, n: 0, p: 0, pf: 450.5, ps: 410.0 },
-    { pos: 2, name: "Luigi Verdi", pti: 4, g: 3, v: 1, n: 1, p: 1, pf: 420.0, ps: 425.0 },
-    { pos: 3, name: "Giovanni Neri", pti: 2, g: 3, v: 0, n: 2, p: 1, pf: 415.5, ps: 430.0 },
-    { pos: 4, name: "Paolo Bianchi", pti: 1, g: 3, v: 0, n: 1, p: 2, pf: 400.0, ps: 421.0 },
-  ];
-
-  const recentMatches = [
-    { userA: "Mario Rossi", scoreA: 155.5, userB: "Luigi Verdi", scoreB: 148.0, threshold: 5, resultA: 3, resultB: 0 },
-    { userA: "Giovanni Neri", scoreA: 140.0, userB: "Paolo Bianchi", scoreB: 142.5, threshold: 5, resultA: 1, resultB: 1 },
-  ];
-
   return (
     <div className="min-h-screen bg-[#0B132B] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1C2541] via-[#0B132B] to-[#050A1F] text-slate-100 font-sans selection:bg-[#F5A623] selection:text-[#0B132B] relative">
       {/* Background ambient lights */}
@@ -309,139 +297,10 @@ export default function FantaF1Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12 pb-24 md:pb-12 relative z-10">
-        {activeTab === 'coppa' ? (
-          <>
-            <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-black text-[#F5A623] tracking-wider drop-shadow-sm">COPPA DI LEGA 2024</h2>
-                <p className="text-sm text-slate-400 mt-1 uppercase tracking-wide">Soglia vittoria: 5 punti | Giornata attuale: GP 12 (Spa-Francorchamps)</p>
-              </div>
-              <div className="flex space-x-3">
-                <select className="bg-[#1C2541] border border-[#F5A623]/30 text-[#F5A623] font-bold tracking-wide text-sm rounded-none focus:ring-[#F5A623] focus:border-[#F5A623] block p-2.5 shadow-[0_0_10px_rgba(245,166,35,0.1)] outline-none">
-                  <option>GIRONE A</option>
-                  <option>GIRONE B</option>
-                  <option>GIRONE C</option>
-                  <option>GIRONE D</option>
-                </select>
-              </div>
-            </div>
+        <div className={activeTab === 'coppa' ? 'block' : 'hidden'}>
+        </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Classifica Girone */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="bg-[#1C2541] rounded-none shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-[#F5A623]/30 overflow-hidden relative">
-                  {/* Decorative corners */}
-                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#F5A623]"></div>
-                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#F5A623]"></div>
-                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#F5A623]"></div>
-                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#F5A623]"></div>
-                  
-                  <div className="px-6 py-4 border-b border-[#F5A623]/30 bg-[#0B132B] flex justify-between items-center">
-                    <h3 className="text-lg font-black text-[#F5A623] tracking-widest">CLASSIFICA GIRONE A</h3>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-slate-300">
-                      <thead className="text-[10px] sm:text-xs text-[#F5A623] uppercase bg-[#0B132B]/50 border-b border-[#F5A623]/30 tracking-wider">
-                        <tr>
-                          <th scope="col" className="px-2 py-3 sm:px-6 sm:py-4 w-8 sm:w-12 text-center font-black">Pos</th>
-                          <th scope="col" className="px-2 py-3 sm:px-6 sm:py-4 font-black">Team / Utente</th>
-                          <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4 text-center font-black text-[#F5A623]">Pti</th>
-                          <th scope="col" className="px-1 py-3 sm:px-3 sm:py-4 text-center font-black" title="Giocate">G</th>
-                          <th scope="col" className="px-1 py-3 sm:px-3 sm:py-4 text-center font-black text-emerald-400" title="Vinte">V</th>
-                          <th scope="col" className="px-1 py-3 sm:px-3 sm:py-4 text-center font-black text-[#F5A623]" title="Pareggiate">N</th>
-                          <th scope="col" className="px-1 py-3 sm:px-3 sm:py-4 text-center font-black text-rose-400" title="Perse">P</th>
-                          <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black" title="Punti Fatti">PF</th>
-                          <th scope="col" className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black" title="Punti Subiti">PS</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {groupStandings.map((row, idx) => (
-                          <tr key={idx} className="bg-[#1C2541] border-b border-[#F5A623]/10 hover:bg-[#2A365C] transition-colors group">
-                            <td className="px-2 py-3 sm:px-6 sm:py-5 text-center font-medium">
-                              {row.pos === 1 || row.pos === 2 ? (
-                                <span className="inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-[#F5A623] text-[#0B132B] text-xs sm:text-sm font-black shadow-[0_0_10px_rgba(245,166,35,0.4)]">
-                                  {row.pos}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-[#0B132B] text-slate-400 border border-slate-700 text-xs sm:text-sm font-black">
-                                  {row.pos}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-2 py-3 sm:px-6 sm:py-5 font-black text-white whitespace-nowrap tracking-wide group-hover:text-[#F5A623] transition-colors text-xs sm:text-sm">
-                              {row.name}
-                            </td>
-                            <td className="px-2 py-3 sm:px-4 sm:py-5 text-center font-black text-[#F5A623] text-base sm:text-xl drop-shadow-sm">
-                              {row.pti}
-                            </td>
-                            <td className="px-1 py-3 sm:px-3 sm:py-5 text-center font-bold text-xs sm:text-sm">{row.g}</td>
-                            <td className="px-1 py-3 sm:px-3 sm:py-5 text-center font-bold text-emerald-400 text-xs sm:text-sm">{row.v}</td>
-                            <td className="px-1 py-3 sm:px-3 sm:py-5 text-center font-bold text-[#F5A623] text-xs sm:text-sm">{row.n}</td>
-                            <td className="px-1 py-3 sm:px-3 sm:py-5 text-center font-bold text-rose-400 text-xs sm:text-sm">{row.p}</td>
-                            <td className="px-2 py-3 sm:px-4 sm:py-5 text-right font-mono font-bold text-slate-300 text-xs sm:text-sm">{row.pf.toFixed(1)}</td>
-                            <td className="px-2 py-3 sm:px-4 sm:py-5 text-right font-mono font-bold text-slate-500 text-xs sm:text-sm">{row.ps.toFixed(1)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="px-6 py-4 bg-[#0B132B] border-t border-[#F5A623]/30 text-xs text-slate-400 flex items-center space-x-4 font-bold tracking-wider uppercase">
-                    <span className="flex items-center"><span className="w-3 h-3 bg-[#F5A623] mr-2 shadow-[0_0_5px_rgba(245,166,35,0.5)]"></span> QUALIFICATE ALLA FASE SUCCESSIVA</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Ultimi Risultati */}
-              <div className="space-y-6">
-                <div className="bg-[#1C2541] rounded-none shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-[#F5A623]/30 overflow-hidden relative">
-                  {/* Decorative corners */}
-                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#F5A623]"></div>
-                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#F5A623]"></div>
-                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#F5A623]"></div>
-                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#F5A623]"></div>
-                  
-                  <div className="px-6 py-4 border-b border-[#F5A623]/30 bg-[#0B132B] flex justify-between items-center">
-                    <h3 className="text-lg font-black text-[#F5A623] tracking-widest">GIORNATA 3 (GP 12)</h3>
-                    <button className="text-[#F5A623] hover:text-white text-xs font-black tracking-wider flex items-center transition-colors">
-                      VEDI TUTTE <ChevronRight className="h-4 w-4 ml-1" />
-                    </button>
-                  </div>
-                  <div className="divide-y divide-[#F5A623]/10">
-                    {recentMatches.map((match, idx) => (
-                      <div key={idx} className="p-4 sm:p-5 hover:bg-[#2A365C] transition-colors group">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className={`font-black tracking-wide text-sm sm:text-base ${match.resultA === 3 ? 'text-[#F5A623]' : 'text-slate-300 group-hover:text-white'}`}>
-                            {match.userA}
-                          </span>
-                          <span className="font-mono text-base sm:text-lg font-black bg-[#0B132B] text-[#F5A623] px-2 sm:px-3 py-1 border border-[#F5A623]/30 shadow-[0_0_10px_rgba(245,166,35,0.1)]">
-                            {match.scoreA.toFixed(1)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className={`font-black tracking-wide text-sm sm:text-base ${match.resultB === 3 ? 'text-[#F5A623]' : 'text-slate-300 group-hover:text-white'}`}>
-                            {match.userB}
-                          </span>
-                          <span className="font-mono text-base sm:text-lg font-black bg-[#0B132B] text-[#F5A623] px-2 sm:px-3 py-1 border border-[#F5A623]/30 shadow-[0_0_10px_rgba(245,166,35,0.1)]">
-                            {match.scoreB.toFixed(1)}
-                          </span>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-[#F5A623]/10 flex justify-between items-center text-[10px] sm:text-xs uppercase tracking-wider">
-                          <span className="text-slate-500 font-bold">
-                            DIFF: {Math.abs(match.scoreA - match.scoreB).toFixed(1)} <span className="hidden sm:inline">(SOGLIA: {match.threshold})</span>
-                          </span>
-                          <span className={`font-black ${match.resultA === 3 || match.resultB === 3 ? 'text-[#F5A623]' : 'text-slate-400'}`}>
-                            {match.resultA === 3 ? 'VITTORIA CASA' : match.resultB === 3 ? 'VITTORIA TRASFERTA' : 'PAREGGIO'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : activeTab === 'calendario' ? (
-          <>
+        <div className={activeTab === 'calendario' ? 'block' : 'hidden'}>
             <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div>
@@ -496,7 +355,7 @@ export default function FantaF1Dashboard() {
                             srcSet={`https://flagcdn.com/w80/${getCountryCode(race.Circuit.Location.country)}.png 2x`}
                             alt={race.Circuit.Location.country}
                             className={`w-6 h-4 object-cover rounded-[2px] shadow-sm ${isPast ? 'opacity-50 grayscale' : ''}`}
-                            loading="lazy"
+                            loading="lazy" // Performance: Caricamento pigro per le bandiere
                           />
                           <span className={`text-sm font-black tracking-widest ${isPast ? 'text-slate-500' : 'text-[#F5A623]'}`}>ROUND {race.round}</span>
                         </div>
@@ -531,9 +390,9 @@ export default function FantaF1Dashboard() {
                 })
               )}
             </div>
-          </>
-        ) : (
-          <>
+        </div>
+
+        <div className={activeTab === 'generale' ? 'block' : 'hidden'}>
             {syncResult?.isOffline && (
               <div className="mb-8 p-4 bg-blue-900/30 border border-blue-500/50 rounded-none text-blue-200 text-sm flex items-center gap-3">
                 <div className="p-2 bg-blue-500 rounded-full text-blue-950">
@@ -568,17 +427,17 @@ export default function FantaF1Dashboard() {
                 <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 flex items-center justify-center bg-[#1C2541] rounded-full border-2 border-[#F5A623]/50 overflow-hidden shadow-[0_0_25px_rgba(245,166,35,0.3)]">
                   <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-[#F5A623] absolute z-0" />
                   
-                  <img 
+                  <Image 
                     src={`/api/drive-images?type=league&name=${encodeURIComponent(syncResult?.leagueName || 'PISTON LEAGUE')}`} 
                     alt="League Logo" 
-                    className="h-full w-full object-cover relative z-10"
+                    fill
+                    sizes="(max-width: 640px) 80px, 96px"
+                    className="object-cover relative z-10"
                     onError={(e) => {
                       // Se l'immagine della lega non viene trovata su Drive,
                       // nascondi l'elemento <img> per mostrare l'icona del trofeo sottostante.
-                      e.currentTarget.style.display = 'none';
-                    }}
-                    onLoad={(e) => {
-                      e.currentTarget.style.display = 'block';
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
                     }}
                   />
                 </div>
@@ -668,13 +527,16 @@ export default function FantaF1Dashboard() {
                                 
                                 return (
                                   <>
-                                    <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden border-2 border-[#F5A623]/50 bg-[#0B132B] shadow-[0_0_10px_rgba(245,166,35,0.2)]">
-                                      <img 
+                                    <div className="relative flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden border-2 border-[#F5A623]/50 bg-[#0B132B] shadow-[0_0_10px_rgba(245,166,35,0.2)]">
+                                      <Image 
                                         src={logoUrl} 
                                         alt={teamName} 
-                                        className="h-full w-full object-cover" 
+                                        fill
+                                        sizes="(max-width: 640px) 40px, 48px"
+                                        className="object-cover"
                                         onError={(e) => {
-                                          e.currentTarget.style.display = 'none';
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
                                         }}
                                       />
                                     </div>
@@ -759,8 +621,7 @@ export default function FantaF1Dashboard() {
                 </table>
               </div>
             </div>
-          </>
-        )}
+        </div>
       </main>
 
       {/* Bottom Navigation (Mobile) */}

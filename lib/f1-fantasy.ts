@@ -81,11 +81,3 @@ export async function fetchAndMergeLeagueData(leagueId: string, cookieToken: str
     throw error;
   }
 }
-
-// Mock data per testare la UI
-export const mockAggregatedLeaderboard = [
-  { userId: "u1", username: "Mario Rossi", totalScore: 345.5, teamsCount: 2 },
-  { userId: "u2", username: "Luigi Verdi", totalScore: 320.0, teamsCount: 2 },
-  { userId: "u3", username: "Giovanni Neri", totalScore: 315.5, teamsCount: 2 },
-  { userId: "u4", username: "Paolo Bianchi", totalScore: 290.0, teamsCount: 2 },
-];
