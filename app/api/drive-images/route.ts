@@ -101,19 +101,28 @@ export async function GET(request: NextRequest) {
     // Utile se il file su Drive ha gli spazi invece degli underscore
     const strategyOriginal = nameTrimmed;
 
-    console.log(`[DRIVE-API] Cerco match per: "${strategySimple}" OPPURE "${strategySanitized}" OPPURE "${strategyOriginal}"`);
+    console.log(`[DRIVE-API] Cerco match per: "${strategySimple}" (Priority) OR "${strategySanitized}" OR "${strategyOriginal}"`);
 
-    // Ricerca case-insensitive ignorando l'estensione
-    const file = files.find(f => {
-      if (!f.name) return false;
+    // Helper per normalizzare il nome del file da Drive
+    const getNormalizedFileName = (f: any) => {
+      if (!f.name) return '';
       const fileNameWithoutExt = f.name.substring(0, f.name.lastIndexOf('.')) || f.name;
-      const fNameLower = fileNameWithoutExt.trim().toLowerCase();
-      
-      // Cerca corrispondenza con una delle strategie
-      return fNameLower === strategySimple.toLowerCase() || 
-             fNameLower === strategySanitized.toLowerCase() ||
-             fNameLower === strategyOriginal.toLowerCase();
-    });
+      return fileNameWithoutExt.trim().toLowerCase();
+    };
+
+    // Ricerca sequenziale per priorità
+    // 1. Priorità assoluta: Nome con underscore (es. "piston_league")
+    let file = files.find(f => getNormalizedFileName(f) === strategySimple.toLowerCase());
+
+    // 2. Fallback: Nome sanitizzato (es. "mazespin_f1_team_scuderia_spinnati")
+    if (!file) {
+      file = files.find(f => getNormalizedFileName(f) === strategySanitized.toLowerCase());
+    }
+
+    // 3. Fallback: Nome originale con spazi (es. "piston league")
+    if (!file) {
+      file = files.find(f => getNormalizedFileName(f) === strategyOriginal.toLowerCase());
+    }
 
     if (!file || !file.id) {
       console.log(`[DRIVE-API] Nessun file trovato per "${name}".`);

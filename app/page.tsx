@@ -104,28 +104,36 @@ export default function FantaF1Dashboard() {
   // Settings State
   // const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Disattivato
 
-  const handleSync = async () => {
+  const handleSync = async (forceRefresh: boolean = false) => {
     setSyncStatus('loading');
     setSyncResult(null);
 
+    // Se forziamo il refresh, puliamo la cache e resettiamo la vista
+    if (forceRefresh) {
+      localStorage.removeItem('f1_fantasy_standings');
+      setRealStandings([]);
+    }
+
     // Carica i dati dalla cache se disponibili all'inizio per evitare flash di vuoto
-    try {
-      const cached = localStorage.getItem('f1_fantasy_standings');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.aggregated) {
-          setRealStandings(parsed.aggregated);
-          // Se abbiamo dati in cache, li mostriamo subito come "success" temporaneo
-          // ma continuiamo il caricamento in background
-          setSyncResult({ 
-            leagueName: parsed.leagueName,
-            isCached: true,
-            lastUpdated: parsed.lastUpdated
-          });
+    if (!forceRefresh) {
+      try {
+        const cached = localStorage.getItem('f1_fantasy_standings');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.aggregated) {
+            setRealStandings(parsed.aggregated);
+            // Se abbiamo dati in cache, li mostriamo subito come "success" temporaneo
+            // ma continuiamo il caricamento in background
+            setSyncResult({ 
+              leagueName: parsed.leagueName,
+              isCached: true,
+              lastUpdated: parsed.lastUpdated
+            });
+          }
         }
+      } catch (e) {
+        console.error("Errore lettura cache classifica", e);
       }
-    } catch (e) {
-      console.error("Errore lettura cache classifica", e);
     }
 
     const controller = new AbortController();
@@ -565,11 +573,9 @@ export default function FantaF1Dashboard() {
                     alt="League Logo" 
                     className="h-full w-full object-cover relative z-10"
                     onError={(e) => {
-                      if (e.currentTarget.src.includes('/api/drive-images')) {
-                        e.currentTarget.src = '/logo.png';
-                      } else {
-                        e.currentTarget.style.display = 'none';
-                      }
+                      // Se l'immagine della lega non viene trovata su Drive,
+                      // nascondi l'elemento <img> per mostrare l'icona del trofeo sottostante.
+                      e.currentTarget.style.display = 'none';
                     }}
                     onLoad={(e) => {
                       e.currentTarget.style.display = 'block';
@@ -610,7 +616,7 @@ export default function FantaF1Dashboard() {
                   <h3 className="text-[#F5A623] font-black tracking-widest text-xs sm:text-sm uppercase">Classifica Generale</h3>
                 </div>
                 <button 
-                  onClick={handleSync}
+                  onClick={() => handleSync(true)}
                   disabled={syncStatus === 'loading'}
                   title="Sincronizza Classifica"
                   className="p-2 -mr-2 rounded-full text-slate-400 hover:text-[#F5A623] hover:bg-[#1C2541] transition-all disabled:opacity-50 group focus:outline-none focus:ring-2 focus:ring-[#F5A623]/50"
