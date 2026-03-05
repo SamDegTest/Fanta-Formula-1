@@ -32,7 +32,7 @@ const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Rec
     name: "Speed and Power"
   },
   "Christian Busco":{
-    name: "Dinoco_F1_team"
+    name: "Dinoco F1 team"
   }
 };
 
@@ -668,7 +668,7 @@ export default function FantaF1Dashboard() {
                                         alt={teamName} 
                                         className="h-full w-full object-cover" 
                                         onError={(e) => {
-                                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(teamName)}&background=1C2541&color=F5A623`;
+                                          e.currentTarget.style.display = 'none';
                                         }}
                                       />
                                     </div>

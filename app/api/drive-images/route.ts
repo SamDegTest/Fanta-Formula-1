@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     const file = files.find(f => {
       if (!f.name) return false;
       const fileNameWithoutExt = f.name.substring(0, f.name.lastIndexOf('.')) || f.name;
-      const fNameLower = fileNameWithoutExt.toLowerCase();
+      const fNameLower = fileNameWithoutExt.trim().toLowerCase();
       
       // Cerca corrispondenza con una delle strategie
       return fNameLower === strategySimple.toLowerCase() || 
