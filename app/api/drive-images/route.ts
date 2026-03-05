@@ -1,8 +1,8 @@
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
-const TEAM_FOLDER_ID = '1xORwxcYHR7dSPn7sR4fZxMtozdvwbhcX';
-const LEAGUE_FOLDER_ID = '1SdNOJ8a8HvASb7ST1uesgbMWQSZMGeba';
+const TEAM_FOLDER_ID = process.env.TEAM_FOLDER_ID;
+const LEAGUE_FOLDER_ID = process.env.LEAGUE_FOLDER_ID;
 
 // Inizializza l'autenticazione Google
 const getAuth = () => {

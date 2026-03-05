@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const LEAGUE_ID = process.env.LEAGUE_ID || '5525807';
+const LEAGUE_ID = process.env.LEAGUE_ID;
 
 // VARIABILE GLOBALE PER GLI HEADERS
 // Modifica questa variabile se la chiamata API smette di funzionare
