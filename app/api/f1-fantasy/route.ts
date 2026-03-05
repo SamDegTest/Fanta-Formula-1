@@ -1,6 +1,75 @@
 import { NextResponse } from 'next/server';
 
-const LEAGUE_ID = '5525807';
+const LEAGUE_ID = process.env.LEAGUE_ID || '5525807';
+
+// DATI MOCK PER MODALITÀ DEMO
+const DEMO_DATA = {
+  success: true,
+  isDemo: true,
+  leagueName: "PISTON LEAGUE (DEMO)",
+  aggregated: [
+    {
+      rank: 1,
+      username: "Domenico Ghionda",
+      totalScore: 452.5,
+      teamsCount: 2,
+      teams: [
+        { name: "Habibi motorsport F1 team", score: 230.5, team_no: 1 },
+        { name: "Habibi B-Team", score: 222, team_no: 2 }
+      ]
+    },
+    {
+      rank: 2,
+      username: "Federico Russo",
+      totalScore: 438.0,
+      teamsCount: 2,
+      teams: [
+        { name: "AvvocatoSenior F1 team", score: 225, team_no: 1 },
+        { name: "Senior Junior Team", score: 213, team_no: 2 }
+      ]
+    },
+    {
+      rank: 3,
+      username: "Raul Sisto",
+      totalScore: 415.5,
+      teamsCount: 2,
+      teams: [
+        { name: "Legione del centauro", score: 210.5, team_no: 1 },
+        { name: "Centauro II", score: 205, team_no: 2 }
+      ]
+    },
+    {
+      rank: 4,
+      username: "Gianluca Tunzi",
+      totalScore: 398.0,
+      teamsCount: 2,
+      teams: [
+        { name: "Tunzi Hyperflux Racing", score: 200, team_no: 1 },
+        { name: "Hyperflux Evo", score: 198, team_no: 2 }
+      ]
+    },
+    {
+      rank: 5,
+      username: "Elena Russo",
+      totalScore: 385.5,
+      teamsCount: 2,
+      teams: [
+        { name: "Nenacrochet", score: 195.5, team_no: 1 },
+        { name: "Crochet Speed", score: 190, team_no: 2 }
+      ]
+    },
+    {
+      rank: 6,
+      username: "Samuele De Giosa",
+      totalScore: 370.0,
+      teamsCount: 2,
+      teams: [
+        { name: "Samu Racing", score: 185, team_no: 1 },
+        { name: "De Giosa F1", score: 185, team_no: 2 }
+      ]
+    }
+  ]
+};
 
 // VARIABILE GLOBALE PER GLI HEADERS
 // Modifica questa variabile se la chiamata API smette di funzionare
@@ -32,22 +101,9 @@ export async function GET(request: Request) {
   try {
     const headers = getF1Headers();
     
-    // DEMO MODE FALLBACK: Se manca il cookie, restituiamo dati mockati per permettere di vedere l'app
     if (!headers.cookie) {
-      console.warn("F1_API_COOKIE mancante. Attivazione DEMO MODE con dati mockati.");
-      return NextResponse.json({ 
-        success: true, 
-        isDemoMode: true,
-        leagueName: "PISTON LEAGUE (DEMO)",
-        aggregated: [
-          { rank: 1, username: "Federico Russo", totalScore: 450.5, teamsCount: 2, teams: [{ name: "AvvocatoSenior F1 team", score: 225.25 }, { name: "Team B", score: 225.25 }] },
-          { rank: 2, username: "Domenico Ghionda", totalScore: 420.0, teamsCount: 2, teams: [{ name: "Habibi motorsport F1 team", score: 210.0 }, { name: "Team D", score: 210.0 }] },
-          { rank: 3, username: "Raul Sisto", totalScore: 415.5, teamsCount: 2, teams: [{ name: "Legione del centauro", score: 207.75 }, { name: "Team F", score: 207.75 }] },
-          { rank: 4, username: "Elena Russo", totalScore: 400.0, teamsCount: 2, teams: [{ name: "Nenacrochet", score: 200.0 }, { name: "Team H", score: 200.0 }] },
-          { rank: 5, username: "Gianluca Tunzi", totalScore: 380.2, teamsCount: 2, teams: [{ name: "Tunzi Hyperflux Racing", score: 190.1 }, { name: "Team J", score: 190.1 }] }
-        ],
-        note: "Stai visualizzando dati DEMO perché la variabile d'ambiente F1_API_COOKIE non è configurata."
-      });
+      console.warn("F1_API_COOKIE non configurato. Restituisco dati DEMO.");
+      return NextResponse.json(DEMO_DATA);
     }
 
     // Nuovo endpoint per la classifica della lega privata
