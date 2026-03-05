@@ -21,6 +21,15 @@ const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Rec
   },
   "gianluca tunzi": {
     name: "Tunzi Hyperflux Racing",
+  },
+  "Vittorio Sisto":{
+    name: "Beavers"
+  },
+  "Luca Siciliani":{
+    name: "Scuderia Sbinnati"
+  },
+  "Valerio Maniscalco":{
+    name: "Speed and Power"
   }
 };
 
