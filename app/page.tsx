@@ -43,6 +43,9 @@ const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Rec
   },
   "Davide Milella":{
     name: "Cavallino Arrapante"
+  },
+  "Eryk Karwasinskí":{
+    name: "G. Mazzoni Gufo Racing"
   }
 };
 
