@@ -40,6 +40,9 @@ const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Rec
   },
   "Francesco Tullo":{
     name: "MERDECESS AMG FORMULA 1 TEAM"
+  },
+  "Davide Milella":{
+    name: "Cavallino Arrapante"
   }
 };
 
