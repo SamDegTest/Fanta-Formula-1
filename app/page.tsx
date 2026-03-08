@@ -624,7 +624,7 @@ export default function FantaF1Dashboard() {
                           </td>
 
                           <td className="px-1 py-4 sm:px-6 sm:py-6 text-center font-mono text-base sm:text-2xl font-black text-[#F5A623] drop-shadow-sm whitespace-nowrap align-middle">
-                            {row.totalScore.toFixed(1)}
+                            {Math.round(row.totalScore)}
                           </td>
                         </tr>
                       ))
