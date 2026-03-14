@@ -18,9 +18,8 @@ export interface KnockoutRound {
 }
 
 export interface Bracket {
-  type: 'groups' | 'knockout';
   groups: Group[] | null;
   knockout: {
     rounds: KnockoutRound[];
-  } | null;
+  };
 }

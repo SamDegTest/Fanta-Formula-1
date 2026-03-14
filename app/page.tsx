@@ -1,73 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Trophy, Users, Calendar, Settings, ChevronRight, TrendingUp, TrendingDown, Minus, RefreshCw, Bot, Zap, Shield, Shuffle, Infinity, Wrench, PieChart, ArrowRightLeft, Navigation } from 'lucide-react';
 
-// --- CONFIGURAZIONE SQUADRE STATICHE ---
-// Aggiungi qui le associazioni tra nome utente e nome/logo squadra personalizzato.
-// La chiave deve essere parte del nome utente o nome reale (tutto in minuscolo).
-const CUSTOM_TEAMS: Record<string, { name: string, logo?: string, boosters?: Record<string, number> }> = {
-  "federico russo": {
-    name: "AvvocatoSenior F1 team",
-  },
-  "domenico ghionda": {
-    name: "Habibi motorsport F1 team",
-  },
-  "raul sisto": {
-    name: "Legione del centauro",
-  },
-  "elena russo": {
-    name: "Nenacrochet",
-  },
-  "gianluca tunzi": {
-    name: "Tunzi Hyperflux Racing",
-  },
-  "Vittorio Sisto":{
-    name: "Beavers"
-  },
-  "Luca Siciliani":{
-    name: "Scuderia Sbinnati"
-  },
-  "Valerio Maniscalco":{
-    name: "Speed and Power"
-  },
-  "Christian Busco":{
-    name: "Dinoco F1 team"
-  },
-  "Piergiorgio Tunzi":{
-    name: "Alette"
-  },
-  "Francesco Tullo":{
-    name: "MERDECESS AMG FORMULA 1 TEAM"
-  },
-  "Davide Milella":{
-    name: "Cavallino Arrapante"
-  },
-  "Eryk Karwasinskí":{
-    name: "G. Mazzoni Gufo Racing"
-  }
-};
+import CoppaPage from './coppa/page';
 
-const BOOSTER_TYPES = [
-  { id: 'limitless', name: 'Limitless', icon: Infinity, color: 'text-blue-500', bg: 'bg-blue-500/20', border: 'border-blue-500/50' },
-  { id: 'wildcard', name: 'Wildcard', icon: Shuffle, color: 'text-red-600', bg: 'bg-red-600/20', border: 'border-red-600/50' },
-  { id: 'final_fix', name: 'Final Fix', icon: Wrench, color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
-  { id: 'autopilot', name: 'Auto Pilot', icon: Bot, color: 'text-teal-500', bg: 'bg-teal-500/20', border: 'border-teal-500/50' },
-  { id: 'no_negative', name: 'No Negative', icon: Shield, color: 'text-purple-500', bg: 'bg-purple-500/20', border: 'border-purple-500/50' },
-  { id: 'extra_drs', name: 'x3 Boost', icon: Zap, color: 'text-green-500', bg: 'bg-green-500/20', border: 'border-green-500/50' }
-];
-
-const getCustomTeamInfo = (username?: string, name?: string) => {
-  const searchStr = `${username || ''} ${name || ''}`.toLowerCase();
-  
-  for (const [key, info] of Object.entries(CUSTOM_TEAMS)) {
-    if (searchStr.includes(key.toLowerCase())) {
-      return info;
-    }
-  }
-  return null;
-};
+import { getCustomTeamInfo } from '@/lib/teams';
 // ---------------------------------------
 
 // Helper per ottenere il codice nazione per le bandiere
@@ -102,7 +42,17 @@ const getCountryCode = (country: string): string => {
   return map[country] || 'un';
 };
 
+const BOOSTER_TYPES = [
+    { id: 'final_fix', name: 'Final Fix', icon: Zap, color: 'text-yellow-300', bg: 'bg-yellow-900/50', border: 'border-yellow-500/50' },
+    { id: 'no_negative', name: 'No Negative', icon: Shield, color: 'text-blue-300', bg: 'bg-blue-900/50', border: 'border-blue-500/50' },
+    { id: 'wildcard', name: 'Wildcard', icon: Infinity, color: 'text-purple-300', bg: 'bg-purple-900/50', border: 'border-purple-500/50' },
+    { id: 'pit_stop', name: 'Pit Stop', icon: Wrench, color: 'text-slate-300', bg: 'bg-slate-700/50', border: 'border-slate-500/50' },
+    { id: 'driver_swap', name: 'Driver Swap', icon: ArrowRightLeft, color: 'text-orange-300', bg: 'bg-orange-900/50', border: 'border-orange-500/50' },
+    { id: 'extra_driver', name: 'Extra Driver', icon: PieChart, color: 'text-green-300', bg: 'bg-green-900/50', border: 'border-green-500/50' },
+];
+
 export default function FantaF1Dashboard() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'generale' | 'coppa' | 'calendario'>('generale');
   
   // API States
@@ -116,6 +66,13 @@ export default function FantaF1Dashboard() {
   
   // Settings State
   // const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Disattivato
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'generale' || tabParam === 'coppa' || tabParam === 'calendario') {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const handleSync = async (forceRefresh: boolean = false) => {
     setSyncStatus('loading');
@@ -244,7 +201,7 @@ export default function FantaF1Dashboard() {
     if (activeTab === 'calendario' && calendarData.length === 0) {
       fetchCalendar();
     }
-  }, [activeTab]);
+  }, [activeTab, calendarData.length]);
 
   return (
     <div className="min-h-screen bg-[#0B132B] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1C2541] via-[#0B132B] to-[#050A1F] text-slate-100 font-sans selection:bg-[#F5A623] selection:text-[#0B132B] relative">
@@ -265,13 +222,11 @@ export default function FantaF1Dashboard() {
                 <span>CLASSIFICA GENERALE</span>
               </button>
               <button 
-                disabled
-                className="font-bold tracking-wide flex items-center space-x-2 pb-2 transition-all text-slate-600 cursor-not-allowed relative group"
-                title="Funzionalità in arrivo"
+                onClick={() => setActiveTab('coppa')}
+                className={`font-bold tracking-wide flex items-center space-x-2 pb-2 transition-all ${activeTab === 'coppa' ? 'text-[#F5A623] border-b-2 border-[#F5A623]' : 'text-slate-400 hover:text-slate-200'}`}
               >
-                <Trophy className="h-5 w-5 opacity-50" />
-                <span className="opacity-50">COPPA</span>
-                <span className="absolute -top-3 -right-6 bg-[#F5A623]/20 text-[#F5A623] text-[8px] px-1.5 py-0.5 rounded-sm border border-[#F5A623]/30 tracking-widest">PRESTO</span>
+                <Trophy className="h-5 w-5" />
+                <span>COPPA</span>
               </button>
               <button 
                 onClick={() => setActiveTab('calendario')}
@@ -281,13 +236,6 @@ export default function FantaF1Dashboard() {
                 <span>CALENDARIO</span>
               </button>
             </nav>
-            <button 
-              disabled
-              className="p-2 text-slate-600 cursor-not-allowed transition-colors"
-              title="Impostazioni disattivate"
-            >
-              <Settings className="h-6 w-6" />
-            </button>
           </div>
         </div>
       </header>
@@ -298,18 +246,12 @@ export default function FantaF1Dashboard() {
           <h1 className="text-xl font-black text-[#F5A623] tracking-widest uppercase truncate max-w-[80%]">
             {syncResult?.leagueName || 'PISTON LEAGUE'}
           </h1>
-          <button 
-            disabled
-            className="p-2 text-slate-600 cursor-not-allowed transition-colors"
-            title="Impostazioni disattivate"
-          >
-            <Settings className="h-5 w-5" />
-          </button>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12 pb-24 md:pb-12 relative z-10">
         <div className={activeTab === 'coppa' ? 'block' : 'hidden'}>
+          <CoppaPage />
         </div>
 
         <div className={activeTab === 'calendario' ? 'block' : 'hidden'}>
@@ -362,12 +304,12 @@ export default function FantaF1Dashboard() {
                       
                       <div className={`px-5 py-3 border-b ${isPast ? 'border-slate-700/50 bg-[#0B132B]/50' : 'border-[#F5A623]/30 bg-[#0B132B]'} flex justify-between items-center`}>
                         <div className="flex items-center gap-3">
-                          <img 
+                          <Image 
                             src={`https://flagcdn.com/w40/${getCountryCode(race.Circuit.Location.country)}.png`}
-                            srcSet={`https://flagcdn.com/w80/${getCountryCode(race.Circuit.Location.country)}.png 2x`}
                             alt={race.Circuit.Location.country}
-                            className={`w-6 h-4 object-cover rounded-[2px] shadow-sm ${isPast ? 'opacity-50 grayscale' : ''}`}
-                            loading="lazy" // Performance: Caricamento pigro per le bandiere
+                            width={24}
+                            height={16}
+                            className={`object-cover rounded-[2px] shadow-sm ${isPast ? 'opacity-50 grayscale' : ''}`}
                           />
                           <span className={`text-sm font-black tracking-widest ${isPast ? 'text-slate-500' : 'text-[#F5A623]'}`}>ROUND {race.round}</span>
                         </div>
@@ -440,7 +382,7 @@ export default function FantaF1Dashboard() {
                   <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-[#F5A623] absolute z-0" />
                   
                   <Image 
-                    src={`/api/drive-images?type=league&name=${encodeURIComponent(syncResult?.leagueName || 'PISTON LEAGUE')}&v=${syncResult?.lastUpdated || 1}`} 
+                    src={`/api/drive-images?type=league&name=${encodeURIComponent(syncResult?.leagueName || 'PISTON LEAGUE')}`} 
                     alt="League Logo" 
                     fill
                     sizes="(max-width: 640px) 80px, 96px"
@@ -535,7 +477,7 @@ export default function FantaF1Dashboard() {
                               {(() => {
                                 const customInfo = getCustomTeamInfo(row.username, row.name);
                                 const teamName = customInfo ? customInfo.name : (row.teams ? row.teams.map((t: any) => t.name).join(' & ') : row.name);
-                                const logoUrl = `/api/drive-images?type=team&name=${encodeURIComponent(teamName)}&v=${row.rank || idx}`;
+                                const logoUrl = `/api/drive-images?type=team&name=${encodeURIComponent(teamName)}`;
                                 
                                 return (
                                   <>
@@ -647,13 +589,11 @@ export default function FantaF1Dashboard() {
             <span className="text-[10px] font-bold tracking-wider">CLASSIFICA</span>
           </button>
           <button 
-            disabled
-            className="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors text-slate-600 cursor-not-allowed relative"
-            title="Funzionalità in arrivo"
+            onClick={() => setActiveTab('coppa')}
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${activeTab === 'coppa' ? 'text-[#F5A623]' : 'text-slate-400 hover:text-slate-200'}`}
           >
-            <Trophy className="h-5 w-5 opacity-50" />
-            <span className="text-[10px] font-bold tracking-wider opacity-50">COPPA</span>
-            <span className="absolute top-1 right-1/4 translate-x-1/2 bg-[#F5A623]/20 text-[#F5A623] text-[7px] px-1 py-[1px] rounded-sm border border-[#F5A623]/30 tracking-widest">PRESTO</span>
+            <Trophy className="h-5 w-5" />
+            <span className="text-[10px] font-bold tracking-wider">COPPA</span>
           </button>
           <button 
             onClick={() => setActiveTab('calendario')}
