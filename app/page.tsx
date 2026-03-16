@@ -566,23 +566,24 @@ export default function FantaF1Dashboard() {
                             <div className="md:hidden mt-3 flex flex-wrap gap-1.5 items-center">
                               {(() => {
                                 const customInfo = getCustomTeamInfo(row.username, row.name);
-                                const boosters = customInfo?.boosters || {};
+                                const staticBoosters = customInfo?.boosters || {};
                                 
                                 return BOOSTER_TYPES.map((booster) => {
                                   const Icon = booster.icon;
-                                  const count = boosters[booster.id] || 0;
-                                  const isUsed = count > 0;
+                                  const count = staticBoosters[booster.id] || 0;
+                                  const totalCount = count + (row.applied_booster === booster.id ? 1 : 0);
+                                  const isUsed = totalCount > 0;
                                   
                                   return (
                                     <div 
                                       key={booster.id} 
                                       className={`relative flex items-center justify-center w-6 h-6 rounded-full border ${isUsed ? `${booster.border} ${booster.bg}` : 'border-slate-700 bg-slate-800/50 grayscale opacity-40'}`}
-                                      title={`${booster.name}: ${count}/2`}
+                                      title={`${booster.name}: ${totalCount}/2`}
                                     >
                                       <Icon className={`w-3.5 h-3.5 ${isUsed ? booster.color : 'text-slate-400'}`} />
-                                      {count > 1 && (
+                                      {totalCount > 1 && (
                                         <span className="absolute -top-1.5 -right-1.5 bg-[#F5A623] text-[#0B132B] text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
-                                          2
+                                          {totalCount}
                                         </span>
                                       )}
                                     </div>
@@ -597,23 +598,24 @@ export default function FantaF1Dashboard() {
                             <div className="flex gap-2 items-center justify-center">
                               {(() => {
                                 const customInfo = getCustomTeamInfo(row.username, row.name);
-                                const boosters = customInfo?.boosters || {};
+                                const staticBoosters = customInfo?.boosters || {};
                                 
                                 return BOOSTER_TYPES.map((booster) => {
                                   const Icon = booster.icon;
-                                  const count = boosters[booster.id] || 0;
-                                  const isUsed = count > 0;
+                                  const count = staticBoosters[booster.id] || 0;
+                                  const totalCount = count + (row.applied_booster === booster.id ? 1 : 0);
+                                  const isUsed = totalCount > 0;
                                   
                                   return (
                                     <div 
                                       key={booster.id} 
                                       className={`relative flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-300 ${isUsed ? `${booster.border} ${booster.bg} shadow-[0_0_8px_rgba(0,0,0,0.3)]` : 'border-slate-700 bg-slate-800/50 grayscale opacity-40 hover:opacity-60'}`}
-                                      title={`${booster.name}: ${count}/2`}
+                                      title={`${booster.name}: ${totalCount}/2`}
                                     >
                                       <Icon className={`w-4 h-4 ${isUsed ? booster.color : 'text-slate-400'}`} />
-                                      {count > 1 && (
+                                      {totalCount > 1 && (
                                         <span className="absolute -top-1.5 -right-1.5 bg-[#F5A623] text-[#0B132B] text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                                          2
+                                          {totalCount}
                                         </span>
                                       )}
                                     </div>

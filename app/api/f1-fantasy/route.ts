@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Forza la route ad essere dinamica per evitare che Next.js la "congeli" (Static Generation)
 export const dynamic = 'force-dynamic';
@@ -7,11 +9,19 @@ const LEAGUE_ID = process.env.LEAGUE_ID;
 
 // VARIABILE GLOBALE PER GLI HEADERS
 // Modifica questa variabile se la chiamata API smette di funzionare
-const getF1Headers = () => {
-  const cookie = process.env.F1_API_COOKIE;
+const getF1Headers = (req?: Request) => {
+  const envCookie = process.env.F1_API_COOKIE;
+  const reqCookie = req ? req.headers.get('cookie') : null;
+  // Se la richiesta web ha già i veri cookie di F1 (es: siamo in prod dietro proxy sullo stesso dominio), usa quelli.
+  // Altrimenti, sul server locale, il browser invierà cookie di localhost che non servono all'API di F1,
+  // quindi in quel caso facciamo fallback sulla variabile d'ambiente.
+  let cookie = envCookie || '';
+  if (reqCookie && reqCookie.includes('F1_FANTASY_007')) {
+    cookie = reqCookie;
+  }
   
   if (!cookie) {
-    console.error("ERRORE CRITICO: Variabile d'ambiente F1_API_COOKIE mancante.");
+    console.error("ERRORE CRITICO: Cookie F1 mancante.");
   }
 
   return {
@@ -33,7 +43,7 @@ const getF1Headers = () => {
 
 export async function GET(request: Request) {
   try {
-    const headers = getF1Headers();
+    const headers = getF1Headers(request);
     
     if (!headers.cookie) {
       return NextResponse.json(
@@ -83,6 +93,8 @@ export async function GET(request: Request) {
           { status: 502 }
         );
       }
+
+
       
       // Aggregazione automatica basata sulla nuova struttura
       let aggregatedLeaderboard: any[] = [];
@@ -110,7 +122,8 @@ export async function GET(request: Request) {
                 username,
                 totalScore: 0,
                 teamsCount: 0,
-                teams: []
+                teams: [],
+                user_guid: team.user_guid || null
               };
             }
             
@@ -129,6 +142,55 @@ export async function GET(request: Request) {
           aggregatedLeaderboard.forEach((user, index) => {
             user.rank = index + 1;
           });
+          
+          // Recuperiamo i booster in parallelo per ogni utente
+          const mdid = data.Data?.Value?.CurrentRace?.MatchDayId || data.Value?.CurrentRace?.MatchDayId || data.Data?.Value?.mdid || data.Value?.mdid || 2;
+          
+          // Mappatura ipotetica dei booster basata su f1 fantasy storici: 6 = x3
+          const boosterMappings: Record<number, string> = {
+            2: 'limitless',
+            3: 'wildcard',
+            4: 'final_fix',
+            5: 'no_negative',
+            6: 'extra_drs',
+            7: 'autopilot'
+          };
+
+          const opponentPromises = aggregatedLeaderboard.map(async (user) => {
+            if (!user.user_guid || user.teams.length === 0) return;
+            
+            const teamNo = user.teams[0].team_no || 1;
+            const busterVal = new Date().getTime();
+            const opponentUrl = `https://fantasy.formula1.com/services/user/opponentteam/opponentgamedayplayerteamget/1/${user.user_guid}/1/${mdid}/${teamNo}?buster=${busterVal}`;
+            
+            try {
+              // Creiamo un AbortController specifico per ogni chiamata
+              const oppController = new AbortController();
+              const oppTimeout = setTimeout(() => oppController.abort(), 4000); // 4 secondi timeout per la sotto-chiamata
+              
+              const oppResponse = await fetch(opponentUrl, {
+                method: 'GET',
+                headers: headers,
+                signal: oppController.signal
+              });
+              
+              clearTimeout(oppTimeout);
+              
+              if (oppResponse.ok) {
+                const oppData = await oppResponse.json();
+                const userTeamData = oppData.Data?.Value?.userTeam?.[0];
+                if (userTeamData && userTeamData.boosterid) {
+                  const bId = userTeamData.boosterid;
+                  user.applied_booster = boosterMappings[bId] || `id_${bId}`;
+                }
+              }
+            } catch (e) {
+              console.error(`Errore fetch booster per ${user.username}:`, e);
+            }
+          });
+
+          // Aspettiamo che tutte le chiamate ai booster finiscano
+          await Promise.allSettled(opponentPromises);
         }
       } catch (e) {
         console.error("Errore durante l'aggregazione automatica:", e);
