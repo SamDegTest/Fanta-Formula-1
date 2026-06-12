@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Trophy, Users, Calendar, Settings, ChevronRight, TrendingUp, TrendingDown, Minus, RefreshCw, Bot, Zap, Shield, Shuffle, Infinity, Wrench, PieChart, ArrowRightLeft, Navigation } from 'lucide-react';
@@ -51,7 +51,7 @@ const BOOSTER_TYPES = [
     { id: 'extra_driver', name: 'Extra Driver', icon: PieChart, color: 'text-green-300', bg: 'bg-green-900/50', border: 'border-green-500/50' },
 ];
 
-export default function FantaF1Dashboard() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'generale' | 'coppa' | 'calendario'>('generale');
   
@@ -608,5 +608,18 @@ export default function FantaF1Dashboard() {
       </nav>
 
     </div>
+  );
+}
+
+export default function FantaF1Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0B132B] flex flex-col items-center justify-center text-[#F5A623]">
+        <RefreshCw className="h-10 w-10 animate-spin mb-4 opacity-80" />
+        <p className="font-bold tracking-widest animate-pulse text-sm">CARICAMENTO...</p>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
