@@ -9,17 +9,9 @@ const LEAGUE_ID = process.env.LEAGUE_ID;
 
 // VARIABILE GLOBALE PER GLI HEADERS
 // Modifica questa variabile se la chiamata API smette di funzionare
-const getF1Headers = (req?: Request) => {
-  const envCookie = process.env.F1_API_COOKIE;
-  const reqCookie = req ? req.headers.get('cookie') : null;
-  // Se la richiesta web ha già i veri cookie di F1 (es: siamo in prod dietro proxy sullo stesso dominio), usa quelli.
-  // Altrimenti, sul server locale, il browser invierà cookie di localhost che non servono all'API di F1,
-  // quindi in quel caso facciamo fallback sulla variabile d'ambiente.
-  let cookie = envCookie || '';
-  if (reqCookie && reqCookie.includes('F1_FANTASY_007')) {
-    cookie = reqCookie;
-  }
-  
+const getF1Headers = () => {
+  const cookie = process.env.F1_API_COOKIE;
+
   if (!cookie) {
     console.error("ERRORE CRITICO: Cookie F1 mancante.");
   }
@@ -43,14 +35,14 @@ const getF1Headers = (req?: Request) => {
 
 export async function GET(request: Request) {
   try {
-    const headers = getF1Headers(request);
-    
+    const headers = getF1Headers();
+
     if (!headers.cookie) {
       return NextResponse.json(
-        { 
+        {
           error: "Configurazione mancante: F1_API_COOKIE non trovato nelle variabili d'ambiente.",
-          needsConfig: true 
-        }, 
+          needsConfig: true
+        },
         { status: 401 }
       );
     }
@@ -69,45 +61,43 @@ export async function GET(request: Request) {
         headers: headers,
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error("F1 API Error:", response.status, errorText);
         return NextResponse.json(
-          { error: `Errore API F1: ${response.status}`, details: errorText }, 
+          { error: `Errore API F1: ${response.status}`, details: errorText },
           { status: response.status }
         );
       }
 
       const responseText = await response.text();
       let data;
-      
+
       try {
         data = JSON.parse(responseText);
       } catch (e) {
         console.error("F1 API non ha restituito JSON valido. Risposta:", responseText.substring(0, 200) + "...");
         return NextResponse.json(
-          { error: "L'API di F1 ha restituito un formato non valido (probabilmente HTML invece di JSON). Controlla i cookie o l'autenticazione." }, 
+          { error: "L'API di F1 ha restituito un formato non valido (probabilmente HTML invece di JSON). Controlla i cookie o l'autenticazione." },
           { status: 502 }
         );
       }
 
-
-      
       // Aggregazione automatica basata sulla nuova struttura
       let aggregatedLeaderboard: any[] = [];
       try {
         // La nuova API restituisce i dati in data.Value.leaderboard
         const teams = data.Value?.leaderboard || data.Data?.Value || data.teams || data.list || (Array.isArray(data) ? data : []);
-        
+
         if (teams && teams.length > 0) {
           const usersMap: Record<string, any> = {};
-          
+
           teams.forEach((team: any) => {
             const teamName = team.team_name ? decodeURIComponent(team.team_name) : `Team ${team.team_no || ''}`;
-            
+
             // REGOLA FISSA: Ignora sempre la squadra Admin_001
             if (teamName === 'Admin_001') {
               return; // Salta questa iterazione
@@ -116,7 +106,7 @@ export async function GET(request: Request) {
             const username = team.user_name || 'Sconosciuto';
             // cur_points potrebbe essere null prima dell'inizio della stagione
             const score = parseFloat(team.cur_points || team.score || team.points || team.total_points || '0') || 0;
-            
+
             if (!usersMap[username]) {
               usersMap[username] = {
                 username,
@@ -126,18 +116,18 @@ export async function GET(request: Request) {
                 user_guid: team.user_guid || null
               };
             }
-            
+
             usersMap[username].totalScore += score;
             usersMap[username].teamsCount += 1;
-            usersMap[username].teams.push({ 
-              name: teamName, 
+            usersMap[username].teams.push({
+              name: teamName,
               score: score,
               team_no: team.team_no
             });
           });
-          
+
           aggregatedLeaderboard = Object.values(usersMap).sort((a: any, b: any) => b.totalScore - a.totalScore);
-          
+
           // Assegna la posizione (rank) dopo l'ordinamento
           aggregatedLeaderboard.forEach((user, index) => {
             user.rank = index + 1;
@@ -195,7 +185,7 @@ export async function GET(request: Request) {
       } catch (e) {
         console.error("Errore durante l'aggregazione automatica:", e);
       }
-      
+
       // Estrai il nome della lega se disponibile
       let leagueName = "PISTON LEAGUE"; // Default fallback
       if (data.Value?.league_name) {
@@ -206,11 +196,11 @@ export async function GET(request: Request) {
         leagueName = decodeURIComponent(data.league_name);
       }
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         leagueName: leagueName,
         aggregated: aggregatedLeaderboard,
-        raw_data: data 
+        raw_data: data
       }, {
         headers: {
           // Cache CDN: 60 secondi di freschezza assoluta, poi serve dati "vecchi" per 5 minuti mentre aggiorna in background
@@ -221,12 +211,12 @@ export async function GET(request: Request) {
       clearTimeout(timeoutId);
       if (
         fetchError.name === 'AbortError' ||
-        fetchError.code === 'ENOTFOUND' || 
+        fetchError.code === 'ENOTFOUND' ||
         (fetchError.cause && fetchError.cause.code === 'ENOTFOUND') ||
         fetchError.message.includes('fetch failed')
       ) {
-        return NextResponse.json({ 
-          error: "Errore di rete: Impossibile raggiungere l'API di F1 dal server (Timeout o Blocco IP).", 
+        return NextResponse.json({
+          error: "Errore di rete: Impossibile raggiungere l'API di F1 dal server (Timeout o Blocco IP).",
           details: "Il server in cui è ospitata l'app (Google Cloud) ha restrizioni DNS o viene bloccato dai server di F1. Il fallback sul client verrà attivato.",
           isNetworkError: true,
           fallbackUrl: apiUrl

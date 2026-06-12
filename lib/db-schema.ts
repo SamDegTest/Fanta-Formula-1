@@ -14,10 +14,11 @@ export type Cup = {
   id: string;
   name: string;
   threshold: number;
+  giornata_inizio: string;
 };
 
 export type Group = {
-  id: string;
+  id:string;
   cupId: string;
   name: string;
 };
@@ -35,16 +36,10 @@ export type GroupParticipant = {
   pointsAgainst: number;
 };
 
-export type Matchday = {
-  id: string;
-  cupId: string;
-  gpNumber: number; // e.g., 12 for GP 12
-  name: string; // e.g., "Group Stage - Matchday 1"
-};
-
 export type Match = {
   id: string;
-  matchdayId: string;
+  race_id: string;
+  round: string;
   userAId: string;
   userBId: string;
   scoreA: number | null;
@@ -58,7 +53,7 @@ export const dbSchemaJSON = {
     { "id": "u1", "username": "Mario" }
   ],
   "cups": [
-    { "id": "c1", "name": "Coppa di Lega 2024", "threshold": 5 }
+    { "id": "c1", "name": "Coppa di Lega 2024", "threshold": 5, "giornata_inizio": "9158" }
   ],
   "groups": [
     { "id": "g1", "cupId": "c1", "name": "Girone A" }
@@ -77,13 +72,11 @@ export const dbSchemaJSON = {
       "pointsAgainst": 0
     }
   ],
-  "matchdays": [
-    { "id": "md1", "cupId": "c1", "gpNumber": 12, "name": "Giornata 1" }
-  ],
   "matches": [
     {
       "id": "m1",
-      "matchdayId": "md1",
+      "race_id": "9158",
+      "round": "Quarter-finals",
       "userAId": "u1",
       "userBId": "u2",
       "scoreA": null,
@@ -103,7 +96,8 @@ CREATE TABLE users (
 CREATE TABLE cups (
   id UUID PRIMARY KEY,
   name TEXT NOT NULL,
-  threshold NUMERIC NOT NULL DEFAULT 5
+  threshold NUMERIC NOT NULL DEFAULT 5,
+  giornata_inizio TEXT
 );
 
 CREATE TABLE groups (
@@ -125,16 +119,11 @@ CREATE TABLE group_participants (
   points_against NUMERIC DEFAULT 0
 );
 
-CREATE TABLE matchdays (
-  id UUID PRIMARY KEY,
-  cup_id UUID REFERENCES cups(id),
-  gp_number INT NOT NULL,
-  name TEXT NOT NULL
-);
-
 CREATE TABLE matches (
   id UUID PRIMARY KEY,
-  matchday_id UUID REFERENCES matchdays(id),
+  cup_id UUID REFERENCES cups(id),
+  race_id TEXT,
+  round TEXT,
   user_a_id UUID REFERENCES users(id),
   user_b_id UUID REFERENCES users(id),
   score_a NUMERIC,
