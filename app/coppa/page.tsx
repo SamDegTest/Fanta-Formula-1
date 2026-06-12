@@ -690,7 +690,7 @@ export default function CoppaPage() {
           <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-[#F5A623] absolute z-0" />
           <Image
             src={`/api/drive-images?type=league&name=cricchetto_cup`}
-            alt="Piston Cup Logo"
+            alt="Cricchetto Cup Logo"
             fill
             sizes="(max-width: 640px) 96px, 128px"
             className="object-cover relative z-10"
@@ -701,7 +701,7 @@ export default function CoppaPage() {
           />
         </div>
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-widest uppercase drop-shadow-md text-center">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] to-[#D35400]">Piston Cup</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] to-[#D35400]">Cricchetto Cup</span>
         </h1>
       </div>
 
@@ -711,7 +711,7 @@ export default function CoppaPage() {
           <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse"></span>
-              Timeline Gare Piston Cup
+              Timeline Gare Cricchetto Cup
             </span>
             {simStatus.hasStartedSim ? (
               <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 font-mono text-[10px] tracking-wide">
