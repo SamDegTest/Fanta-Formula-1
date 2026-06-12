@@ -35,7 +35,7 @@ export interface CupConfig {
 
 // Lista estratta a sorte
 export const cupConfig: CupConfig = {
-  pointsThreshold: 20,
+  pointsThreshold: 40,
   groups: [
     {
       id: 'group-a',
