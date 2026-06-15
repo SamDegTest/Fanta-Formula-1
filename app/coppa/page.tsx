@@ -131,29 +131,29 @@ export default function CoppaPage() {
   const [activeView, setActiveView] = useState<'gironi' | 'fase-finale'>('gironi');
   const [activeGroupIndex, setActiveGroupIndex] = useState<number>(0);
 
-  // 1. Get ordering from local general standings
+  // 1. Get ordering from Monaco GP standings (pre-coppa baseline) to freeze group composition
   const getOrderedParticipants = (): string[] => {
-    if (typeof window === 'undefined') return defaultParticipantsOrder;
-    try {
-      const cached = localStorage.getItem('f1_fantasy_standings');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.aggregated && parsed.aggregated.length > 0) {
-          const rankMap: Record<string, number> = {};
-          parsed.aggregated.forEach((item: any, index: number) => {
-            rankMap[item.username.toLowerCase()] = index;
-          });
-          return [...defaultParticipantsOrder].sort((a, b) => {
-            const rankA = rankMap[a.toLowerCase()] !== undefined ? rankMap[a.toLowerCase()] : 999;
-            const rankB = rankMap[b.toLowerCase()] !== undefined ? rankMap[b.toLowerCase()] : 999;
-            return rankA - rankB;
-          });
-        }
-      }
-    } catch (e) {
-      console.error("Errore nel recupero della classifica generale per i gironi:", e);
-    }
-    return defaultParticipantsOrder;
+    const MonacoScores: Record<string, number> = {
+      "valerio maniscalco": 2620,
+      "Francesco Tullo": 2618,
+      "Gianluca Tunzi": 2964,
+      "Elena Russo": 2293,
+      "Federico Russo": 2810,
+      "Domenico Ghionda": 3363,
+      "Christian Busco": 2661,
+      "Raul Sisto": 2889,
+      "Davide Milella": 2391,
+      "Eryk Karwasinskí": 2128,
+      "Piergiorgio Tunzi": 2848,
+      "Luca Siciliani": 2489,
+      "Vittorio Sisto": 2633
+    };
+
+    return [...defaultParticipantsOrder].sort((a, b) => {
+      const scoreA = MonacoScores[a] || 0;
+      const scoreB = MonacoScores[b] || 0;
+      return scoreB - scoreA;
+    });
   };
 
   const getTeamName = (playerId: string | null) => {
@@ -251,9 +251,17 @@ export default function CoppaPage() {
 
       if (prevSnap && currSnap) {
         raceScores[curr.id] = {};
-        Object.keys(currSnap).forEach(player => {
-          const score = currSnap[player] - (prevSnap[player] || 0);
-          raceScores[curr.id][player] = Math.max(0, score);
+        
+        const getPlayerScore = (snap: Record<string, number>, name: string): number => {
+          const lowerName = name.toLowerCase();
+          const foundKey = Object.keys(snap).find(k => k.toLowerCase() === lowerName);
+          return foundKey ? snap[foundKey] : 0;
+        };
+
+        defaultParticipantsOrder.forEach(player => {
+          const currScore = getPlayerScore(currSnap, player);
+          const prevScore = getPlayerScore(prevSnap, player);
+          raceScores[curr.id][player] = Math.max(0, currScore - prevScore);
         });
       }
     }
