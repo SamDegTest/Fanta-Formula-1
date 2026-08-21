@@ -8,12 +8,12 @@ export const dynamic = 'force-dynamic';
 const LEAGUE_ID = process.env.LEAGUE_ID;
 
 // VARIABILE GLOBALE PER GLI HEADERS
-// Modifica questa variabile se la chiamata API smette di funzionare
-const getF1Headers = () => {
-  const cookie = process.env.F1_API_COOKIE;
+// Usa sempre il cookie del server (F1_API_COOKIE) per garantire dati coerenti a tutti gli utenti
+const getF1Headers = (_req?: Request) => {
+  const cookie = process.env.F1_API_COOKIE || '';
 
   if (!cookie) {
-    console.error("ERRORE CRITICO: Cookie F1 mancante.");
+    console.error("ERRORE CRITICO: Cookie F1 mancante nelle variabili d'ambiente (F1_API_COOKIE).");
   }
 
   return {
@@ -29,7 +29,7 @@ const getF1Headers = () => {
     'sec-fetch-site': 'same-origin',
     'sec-gpc': '1',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
-    'cookie': cookie || ''
+    'cookie': cookie
   };
 };
 
@@ -132,10 +132,10 @@ export async function GET(request: Request) {
           aggregatedLeaderboard.forEach((user, index) => {
             user.rank = index + 1;
           });
-          
+
           // Recuperiamo i booster in parallelo per ogni utente
           const mdid = data.Data?.Value?.CurrentRace?.MatchDayId || data.Value?.CurrentRace?.MatchDayId || data.Data?.Value?.mdid || data.Value?.mdid || 2;
-          
+
           // Mappatura ipotetica dei booster basata su f1 fantasy storici: 6 = x3
           const boosterMappings: Record<number, string> = {
             2: 'limitless',
@@ -148,24 +148,24 @@ export async function GET(request: Request) {
 
           const opponentPromises = aggregatedLeaderboard.map(async (user) => {
             if (!user.user_guid || user.teams.length === 0) return;
-            
+
             const teamNo = user.teams[0].team_no || 1;
             const busterVal = new Date().getTime();
             const opponentUrl = `https://fantasy.formula1.com/services/user/opponentteam/opponentgamedayplayerteamget/1/${user.user_guid}/1/${mdid}/${teamNo}?buster=${busterVal}`;
-            
+
             try {
               // Creiamo un AbortController specifico per ogni chiamata
               const oppController = new AbortController();
               const oppTimeout = setTimeout(() => oppController.abort(), 4000); // 4 secondi timeout per la sotto-chiamata
-              
+
               const oppResponse = await fetch(opponentUrl, {
                 method: 'GET',
                 headers: headers,
                 signal: oppController.signal
               });
-              
+
               clearTimeout(oppTimeout);
-              
+
               if (oppResponse.ok) {
                 const oppData = await oppResponse.json();
                 const userTeamData = oppData.Data?.Value?.userTeam?.[0];
@@ -203,8 +203,8 @@ export async function GET(request: Request) {
         raw_data: data
       }, {
         headers: {
-          // Cache CDN: 60 secondi di freschezza assoluta, poi serve dati "vecchi" per 5 minuti mentre aggiorna in background
-          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+          // Caching breve lato Edge/CDN (60s) con Stale-While-Revalidate per risposte istantanee
+          'Cache-Control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=120'
         }
       });
     } catch (fetchError: any) {
