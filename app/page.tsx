@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { Trophy, Users, Calendar, Settings, ChevronRight, TrendingUp, TrendingDown, Minus, RefreshCw, Bot, Zap, Shield, Shuffle, Infinity, Wrench, PieChart, ArrowRightLeft, Navigation } from 'lucide-react';
+import { Trophy, Users, Calendar, Settings, ChevronRight, TrendingUp, TrendingDown, Minus, RefreshCw, Bot, Zap, Shield, Shuffle, Infinity, Wrench, PieChart, ArrowRightLeft, Navigation, Swords } from 'lucide-react';
 
 import {
   GIRONE_A_TEAMS,
@@ -63,7 +63,7 @@ const BOOSTER_TYPES = [
 
 function DashboardContent() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'generale' | 'coppa' | 'calendario'>('generale');
+  const [activeTab, setActiveTab] = useState<'generale' | 'coppa' | 'calendario'>('coppa');
 
   // API States
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -267,6 +267,795 @@ function DashboardContent() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12 pb-24 md:pb-12 relative z-10">
         <div className={activeTab === 'coppa' ? 'block' : 'hidden'}>
+          {/* Header Banner Coppa */}
+          <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-6 bg-[#0B132B] border border-slate-700/60 rounded-xl p-6 shadow-2xl">
+            <div className="flex items-center space-x-5">
+              <div className="w-16 h-16 rounded-full border-2 border-[#F5A623] bg-[#101935] flex items-center justify-center p-1 shadow-[0_0_20px_rgba(245,166,35,0.4)]">
+                <img
+                  src="/api/drive-images?type=league&name=cricchetto_cup&v=1"
+                  alt="Cricchetto Cup Emblem"
+                  className="w-full h-full object-contain rounded-full"
+                  onError={(e: any) => { e.target.style.display = 'none'; }}
+                />
+              </div>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-[#F5A623] tracking-widest uppercase drop-shadow-md">
+                  CRICCHETTO CUP
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1">
+                  Torneo Ufficiale Fanta F1 • Edizione 2026
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono font-bold text-[#F5A623] bg-[#F5A623]/10 border border-[#F5A623]/30 px-3 py-1.5 rounded-full uppercase">
+                FASE A GIRONI IN CORSO
+              </span>
+            </div>
+          </div>
+
+          {/* Timeline Gare */}
+          <div className="mb-8 bg-[#0C142B] border border-slate-700/60 rounded-xl p-4 sm:p-6 max-w-6xl mx-auto relative overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-xs font-black text-[#F5A623] uppercase tracking-widest flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#F5A623] animate-pulse"></span>
+                TIMELINE GARE CRICCHETTO CUP
+              </span>
+              <span className="text-[10px] sm:text-xs font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/50 px-3 py-1 rounded-full">
+                GARE DISPUTATE: 4 / 16 GP
+              </span>
+            </div>
+
+            <div
+              id="timeline-scroll-box"
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                const startX = e.clientX;
+                const scrollLeft = el.scrollLeft;
+
+                const onMouseMove = (moveEvt: MouseEvent) => {
+                  const dx = moveEvt.clientX - startX;
+                  el.scrollLeft = scrollLeft - dx;
+                };
+
+                const onMouseUp = () => {
+                  window.removeEventListener('mousemove', onMouseMove);
+                  window.removeEventListener('mouseup', onMouseUp);
+                };
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+              }}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                const thumb = document.getElementById('timeline-scroll-thumb');
+                if (thumb && el.scrollWidth > el.clientWidth) {
+                  const maxScroll = el.scrollWidth - el.clientWidth;
+                  const scrollRatio = el.scrollLeft / maxScroll;
+                  const thumbWidthPercent = (el.clientWidth / el.scrollWidth) * 100;
+                  const maxMargin = 100 - thumbWidthPercent;
+                  thumb.style.width = `${thumbWidthPercent}%`;
+                  thumb.style.marginLeft = `${scrollRatio * maxMargin}%`;
+                }
+              }}
+              className="overflow-x-auto pb-2 pt-2 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing select-none"
+            >
+              <div className="flex items-center min-w-max space-x-6 px-4 relative">
+                {/* Connecting Line: Base Gray Line */}
+                <div className="absolute top-4 left-8 right-8 h-0.5 bg-slate-700/80 z-0"></div>
+
+                {/* Connecting Line: Green Progress Line advancing day by day based on today's real date */}
+                {(() => {
+                  const now = new Date();
+                  const currentYear = now.getFullYear();
+
+                  const parseDate = (dStr: string) => {
+                    const [day, month] = dStr.split('/').map(Number);
+                    return new Date(currentYear, month - 1, day);
+                  };
+
+                  const dates = CUP_TIMELINE.map(item => parseDate(item.date));
+                  let totalPercent = 0;
+
+                  if (now <= dates[0]) {
+                    totalPercent = 0;
+                  } else if (now >= dates[dates.length - 1]) {
+                    totalPercent = 100;
+                  } else {
+                    for (let i = 0; i < dates.length - 1; i++) {
+                      const d1 = dates[i];
+                      const d2 = dates[i + 1];
+                      if (now >= d1 && now <= d2) {
+                        const totalTime = d2.getTime() - d1.getTime();
+                        const elapsedTime = now.getTime() - d1.getTime();
+                        const fraction = totalTime > 0 ? elapsedTime / totalTime : 0;
+                        const stepPercent = 100 / (CUP_TIMELINE.length - 1);
+                        totalPercent = (i + fraction) * stepPercent;
+                        break;
+                      }
+                    }
+                  }
+
+                  return (
+                    <div
+                      className="absolute top-4 left-8 h-0.5 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)] z-0 transition-all duration-500"
+                      style={{ width: `calc(${totalPercent}% - 16px)` }}
+                    ></div>
+                  );
+                })()}
+
+                {CUP_TIMELINE.map((item, idx) => {
+                  const countryMap: Record<string, string> = {
+                    'SPAGNA 1': 'es',
+                    'AUSTRIA': 'at',
+                    'G. BRETAGNA': 'gb',
+                    'BELGIO': 'be',
+                    'UNGHERIA': 'hu',
+                    'OLANDA': 'nl',
+                    'ITALIA': 'it',
+                    'SPAGNA 2': 'es',
+                    'AZERBAIGIAN': 'az',
+                    'SINGAPORE': 'sg',
+                    'STATI UNITI': 'us',
+                    'MESSICO': 'mx',
+                    'BRASILE': 'br',
+                    'LAS VEGAS': 'us',
+                    'QATAR': 'qa',
+                    'ABU DHABI': 'ae'
+                  };
+                  const code = countryMap[item.gp] || 'un';
+                  const isPausa = item.stage === 'PAUSA';
+                  const isNextGironeGP = item.gp === 'ITALIA';
+                  const isPlayedGirone = item.isPlayed && !isPausa;
+
+                  return (
+                    <div key={idx} className="flex flex-col items-center relative z-10 min-w-[90px]">
+                      <div className={`w-9 h-9 rounded-full border-2 overflow-hidden flex items-center justify-center shadow-md transition-all ${isPausa
+                        ? 'border-slate-700 bg-slate-900 opacity-50 grayscale'
+                        : isNextGironeGP
+                          ? 'border-[#F5A623] bg-amber-950 shadow-[0_0_16px_rgba(245,166,35,0.8)] ring-2 ring-[#F5A623]/60'
+                          : isPlayedGirone
+                            ? 'border-emerald-400 bg-emerald-950 shadow-[0_0_12px_rgba(52,211,153,0.6)] ring-2 ring-emerald-500/40'
+                            : 'border-slate-700 bg-slate-900 opacity-50 grayscale'
+                        }`}>
+                        <img
+                          src={`https://flagcdn.com/w40/${code}.png`}
+                          alt={item.gp}
+                          className={`w-full h-full object-cover ${isPausa ? 'grayscale opacity-60' : ''}`}
+                        />
+                      </div>
+
+                      <span className={`text-xs font-black mt-2 tracking-wider uppercase text-center ${isPausa ? 'text-slate-400' : isNextGironeGP ? 'text-[#F5A623]' : isPlayedGirone ? 'text-emerald-400' : 'text-slate-400'
+                        }`}>
+                        {item.gp}
+                      </span>
+                      <span className={`text-[9px] font-bold uppercase mt-1 px-2 py-0.5 rounded border ${isPausa ? 'bg-slate-800/80 text-slate-400 border-slate-700' :
+                        isNextGironeGP ? 'bg-amber-950/90 text-[#F5A623] border-[#F5A623]/60' :
+                          isPlayedGirone ? 'bg-teal-950/80 text-teal-400 border-teal-500/40' :
+                            'bg-purple-950/80 text-purple-300 border-purple-500/40'
+                        }`}>
+                        {item.stage}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500 mt-1">{item.date}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Gold Scrollbar Bar matching Screenshot 1:1 (With Mouse Drag & Drop Control) */}
+            <div className="mt-3 flex items-center space-x-2 px-1">
+              <span className="text-[#F5A623] text-xs select-none p-1 flex-shrink-0 font-bold">
+                ◀
+              </span>
+              <div
+                onMouseDown={(e) => {
+                  const scrollBox = document.getElementById('timeline-scroll-box');
+                  if (!scrollBox) return;
+
+                  const track = e.currentTarget;
+                  const rect = track.getBoundingClientRect();
+                  const startX = e.clientX;
+
+                  const clickRatio = Math.max(0, Math.min(1, (startX - rect.left) / rect.width));
+                  const maxScroll = scrollBox.scrollWidth - scrollBox.clientWidth;
+                  scrollBox.scrollLeft = clickRatio * maxScroll;
+                  const initialScrollLeft = scrollBox.scrollLeft;
+
+                  const onMouseMove = (moveEvent: MouseEvent) => {
+                    const deltaX = moveEvent.clientX - startX;
+                    const scrollDelta = (deltaX / rect.width) * maxScroll;
+                    scrollBox.scrollLeft = initialScrollLeft + scrollDelta;
+                  };
+
+                  const onMouseUp = () => {
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                  };
+
+                  window.addEventListener('mousemove', onMouseMove);
+                  window.addEventListener('mouseup', onMouseUp);
+                }}
+                className="flex-1 h-2 bg-[#F5A623]/20 rounded-full cursor-grab active:cursor-grabbing relative overflow-hidden select-none py-0.5"
+                title="Trascina la barra per scorrere la timeline"
+              >
+                <div
+                  className="h-full bg-[#F5A623] rounded-full shadow-[0_0_10px_#F5A623] transition-all duration-75"
+                  style={{
+                    width: '60%',
+                    marginLeft: '0%'
+                  }}
+                  id="timeline-scroll-thumb"
+                ></div>
+              </div>
+              <span className="text-[#F5A623] text-xs select-none p-1 flex-shrink-0 font-bold">
+                ▶
+              </span>
+            </div>
+          </div>
+
+          {/* Sub-Navigation Switch: Fase a Gironi / Fase Finale */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-[#101935] p-1.5 rounded-full border border-slate-700/70 inline-flex items-center space-x-2 shadow-xl">
+              <button
+                onClick={() => setCoppaPhase('gironi')}
+                className={`px-6 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center space-x-2 transition-all ${coppaPhase === 'gironi'
+                  ? 'bg-gradient-to-r from-[#F5A623] to-[#D35400] text-[#0B132B] shadow-[0_0_15px_rgba(245,166,35,0.4)]'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
+              >
+                <Swords className="h-4 w-4" />
+                <span>FASE A GIRONI</span>
+              </button>
+              <button
+                onClick={() => setCoppaPhase('finale')}
+                className={`px-6 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center space-x-2 transition-all ${coppaPhase === 'finale'
+                  ? 'bg-gradient-to-r from-[#F5A623] to-[#D35400] text-[#0B132B] shadow-[0_0_15px_rgba(245,166,35,0.4)]'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
+              >
+                <Trophy className="h-4 w-4" />
+                <span>FASE FINALE</span>
+              </button>
+            </div>
+          </div>
+
+          {coppaPhase === 'gironi' ? (
+            <div>
+              {/* Group selection tabs */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-[#101935] p-1 rounded-lg border border-slate-700/60 inline-flex items-center space-x-1">
+                  <button
+                    onClick={() => setCoppaGroup('A')}
+                    className={`px-5 py-1.5 rounded-md text-xs font-bold transition-all ${coppaGroup === 'A'
+                      ? 'bg-[#F5A623] text-[#0B132B] shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                      }`}
+                  >
+                    GIRONE A
+                  </button>
+                  <button
+                    onClick={() => setCoppaGroup('B')}
+                    className={`px-5 py-1.5 rounded-md text-xs font-bold transition-all ${coppaGroup === 'B'
+                      ? 'bg-[#F5A623] text-[#0B132B] shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                      }`}
+                  >
+                    GIRONE B
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Left Column: Standings Table */}
+                <div className="lg:col-span-5">
+                  <h2 className="text-xl font-black text-white tracking-wide mb-4 flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-[#F5A623]" />
+                    <span>Classifica Girone {coppaGroup}</span>
+                  </h2>
+
+                  <div className="bg-[#101935]/90 backdrop-blur-md border border-[#F5A623]/30 rounded-xl overflow-hidden shadow-2xl">
+                    <div className="px-4 py-3 bg-[#0B1226]/90 border-b border-slate-700/60 flex items-center justify-between">
+                      <span className="text-xs font-black text-[#F5A623] uppercase tracking-widest flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#F5A623]"></span>
+                        GIRONE {coppaGroup}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {coppaGroup === 'A' ? '7 SQUADRE' : '6 SQUADRE'}
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left text-slate-300">
+                        <thead className="text-[10px] text-slate-400 uppercase bg-[#0B1226]/80 border-b border-slate-700/60">
+                          <tr>
+                            <th className="px-3 py-2.5">SQUADRA</th>
+                            <th className="px-2 py-2.5 text-center font-black text-[#F5A623]">PTS</th>
+                            <th className="px-2 py-2.5 text-center">G</th>
+                            <th className="px-2 py-2.5 text-center">V</th>
+                            <th className="px-2 py-2.5 text-center">N</th>
+                            <th className="px-2 py-2.5 text-center">P</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            const teams = coppaGroup === 'A' ? GIRONE_A_TEAMS : GIRONE_B_TEAMS;
+                            const calendar = coppaGroup === 'A' ? GIRONE_A_CALENDAR : GIRONE_B_CALENDAR;
+                            const standings = calculateGroupStandings(teams, calendar);
+
+                            return standings.map((row, idx) => {
+                              const isQualifyingZone = idx < 4;
+
+                              return (
+                                <tr
+                                  key={row.teamName}
+                                  className={`border-b border-slate-800/60 transition-all hover:bg-[#18244B] ${isQualifyingZone ? 'border-l-2 border-l-emerald-400/80 bg-emerald-950/10' : ''
+                                    }`}
+                                >
+                                  <td className="px-3 py-3 font-bold text-white flex items-center space-x-2.5">
+                                    <div className="w-7 h-7 rounded-full border border-[#F5A623]/60 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5 shadow-md">
+                                      <img
+                                        src={`/api/drive-images?type=team&name=${encodeURIComponent(row.teamName)}&v=1`}
+                                        alt={row.teamName}
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="w-full h-full object-cover rounded-full"
+                                        onError={(e: any) => { e.target.style.display = 'none'; }}
+                                      />
+                                    </div>
+                                    <div className="flex flex-col truncate">
+                                      <span className="truncate max-w-[130px] text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                                        {row.teamName}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-2 py-3 text-center">
+                                    <span className="bg-[#F5A623]/10 border border-[#F5A623]/30 text-[#F5A623] px-2.5 py-0.5 rounded font-mono font-black text-xs sm:text-sm shadow-sm inline-block">
+                                      {row.cupPoints}
+                                    </span>
+                                  </td>
+                                  <td className="px-2 py-3 text-center font-mono text-slate-300 font-medium">{row.played}</td>
+                                  <td className="px-2 py-3 text-center font-mono text-emerald-400 font-bold">{row.won}</td>
+                                  <td className="px-2 py-3 text-center font-mono text-emerald-400 font-bold">{row.drawn}</td>
+                                  <td className="px-2 py-3 text-center font-mono text-red-400 font-bold">{row.lost}</td>
+                                </tr>
+                              );
+                            });
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="px-4 py-2 bg-[#0B1226]/80 border-t border-slate-800 flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399]"></span>
+                      <span>Prime 4 squadre qualificate alla Fase Finale</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Calendario & Risultati */}
+                <div className="lg:col-span-7">
+                  <h2 className="text-xl font-black text-white tracking-wide mb-4 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-[#F5A623]" />
+                    <span>Calendario & Risultati</span>
+                  </h2>
+
+                  <div className="space-y-6">
+                    {(() => {
+                      const calendar = coppaGroup === 'A' ? GIRONE_A_CALENDAR : GIRONE_B_CALENDAR;
+
+                      return calendar.map((giornataData) => (
+                        <div key={giornataData.matchday} className="bg-[#101935]/90 backdrop-blur-sm border border-slate-700/70 hover:border-[#F5A623]/30 transition-all rounded-xl overflow-hidden shadow-xl">
+                          <div className="px-4 py-2.5 bg-[#0B1226]/90 border-b border-slate-700/60 flex justify-between items-center">
+                            <span className="text-xs font-black text-[#F5A623] uppercase tracking-widest flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]"></span>
+                              GIORNATA {giornataData.matchday}
+                            </span>
+                            <span className="text-xs font-mono font-bold text-slate-300 bg-slate-800/80 px-2.5 py-0.5 rounded border border-slate-700 uppercase">
+                              {giornataData.gpName}
+                            </span>
+                          </div>
+
+                          {giornataData.restingTeam && (
+                            <div className="px-4 py-2 bg-amber-950/40 border-b border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-between">
+                              <span className="tracking-wider uppercase text-[10px] text-amber-400">RIPOSO GIORNATA:</span>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 rounded-full border border-[#F5A623]/80 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5 shadow-sm">
+                                  <img
+                                    src={`/api/drive-images?type=team&name=${encodeURIComponent(giornataData.restingTeam)}&v=1`}
+                                    alt={giornataData.restingTeam}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="w-full h-full object-cover rounded-full"
+                                    onError={(e: any) => { e.target.style.display = 'none'; }}
+                                  />
+                                </div>
+                                <span className="font-black text-[#F5A623] text-xs">{giornataData.restingTeam}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="p-3.5 space-y-3">
+                            {giornataData.matches.map((m, idx) => {
+                              const res = (m.scoreA !== null && m.scoreB !== null)
+                                ? calculateCupMatchResult(m.scoreA, m.scoreB)
+                                : null;
+                              const isWinnerA = res?.winner === 'A';
+                              const isWinnerB = res?.winner === 'B';
+
+                              return (
+                                <div key={idx} className="bg-[#141E3B] border border-slate-700/60 rounded-lg overflow-hidden shadow-md transition-all hover:border-slate-600">
+                                  <div className="p-3 space-y-2.5">
+                                    {/* Team A Row */}
+                                    <div className={`flex items-center justify-between p-1.5 rounded-md transition-colors ${isWinnerA ? 'bg-gradient-to-r from-[#F5A623]/15 to-transparent border-l-2 border-l-[#F5A623]' : ''
+                                      }`}>
+                                      <div className="flex items-center space-x-3 min-w-0">
+                                        <div className="w-7 h-7 rounded-full border border-slate-600 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                                          <img
+                                            src={`/api/drive-images?type=team&name=${encodeURIComponent(m.teamA)}&v=1`}
+                                            alt={m.teamA}
+                                            loading="lazy"
+                                            decoding="async"
+                                            className="w-full h-full object-cover"
+                                            onError={(e: any) => { e.target.style.display = 'none'; }}
+                                          />
+                                        </div>
+                                        <span className={`text-xs sm:text-sm font-bold truncate ${isWinnerA ? 'text-[#F5A623]' : 'text-slate-200'}`}>
+                                          {m.teamA} {isWinnerA && '🏆'}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center space-x-3">
+                                        <span className={`font-mono text-sm sm:text-base font-black ${isWinnerA ? 'text-[#F5A623]' : 'text-slate-300'}`}>
+                                          {m.scoreA !== null && m.scoreA !== undefined ? m.scoreA : '-'}
+                                        </span>
+                                        {res && (
+                                          <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full ${res.ptsA === 3
+                                            ? 'bg-emerald-950 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
+                                            : res.ptsA === 2
+                                              ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40'
+                                              : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                            }`}>
+                                            +{res.ptsA} PT
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Team B Row */}
+                                    <div className={`flex items-center justify-between p-1.5 rounded-md transition-colors ${isWinnerB ? 'bg-gradient-to-r from-[#F5A623]/15 to-transparent border-l-2 border-l-[#F5A623]' : ''
+                                      }`}>
+                                      <div className="flex items-center space-x-3 min-w-0">
+                                        <div className="w-7 h-7 rounded-full border border-slate-600 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                                          <img
+                                            src={`/api/drive-images?type=team&name=${encodeURIComponent(m.teamB)}&v=1`}
+                                            alt={m.teamB}
+                                            loading="lazy"
+                                            decoding="async"
+                                            className="w-full h-full object-cover"
+                                            onError={(e: any) => { e.target.style.display = 'none'; }}
+                                          />
+                                        </div>
+                                        <span className={`text-xs sm:text-sm font-bold truncate ${isWinnerB ? 'text-[#F5A623]' : 'text-slate-200'}`}>
+                                          {m.teamB} {isWinnerB && '🏆'}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center space-x-3">
+                                        <span className={`font-mono text-sm sm:text-base font-black ${isWinnerB ? 'text-[#F5A623]' : 'text-slate-300'}`}>
+                                          {m.scoreB !== null && m.scoreB !== undefined ? m.scoreB : '-'}
+                                        </span>
+                                        {res && (
+                                          <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full ${res.ptsB === 3
+                                            ? 'bg-emerald-950 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
+                                            : res.ptsB === 2
+                                              ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40'
+                                              : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                            }`}>
+                                            +{res.ptsB} PT
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {res && (
+                                    <div className="bg-[#0B1226] px-3 py-1.5 border-t border-slate-800 flex justify-between items-center text-[11px] text-slate-400 font-medium">
+                                      <span>
+                                        {isWinnerA ? m.teamA : isWinnerB ? m.teamB : 'Pareggio'} {res.summary}
+                                      </span>
+                                      <span className="font-mono uppercase">
+                                        DIFF: {res.diff} PTS
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-[#0B132B] border border-slate-700/60 rounded-xl p-4 sm:p-8 shadow-2xl relative overflow-hidden">
+              <div 
+                id="finale-scroll-box"
+                onMouseDown={(e) => {
+                  const el = e.currentTarget;
+                  const startX = e.clientX;
+                  const scrollLeft = el.scrollLeft;
+
+                  const onMouseMove = (moveEvt: MouseEvent) => {
+                    const dx = moveEvt.clientX - startX;
+                    el.scrollLeft = scrollLeft - dx;
+                  };
+
+                  const onMouseUp = () => {
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                  };
+
+                  window.addEventListener('mousemove', onMouseMove);
+                  window.addEventListener('mouseup', onMouseUp);
+                }}
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  const thumb = document.getElementById('finale-scroll-thumb');
+                  if (thumb && el.scrollWidth > el.clientWidth) {
+                    const maxScroll = el.scrollWidth - el.clientWidth;
+                    const scrollRatio = el.scrollLeft / maxScroll;
+                    const thumbWidthPercent = (el.clientWidth / el.scrollWidth) * 100;
+                    const maxMargin = 100 - thumbWidthPercent;
+                    thumb.style.width = `${thumbWidthPercent}%`;
+                    thumb.style.marginLeft = `${scrollRatio * maxMargin}%`;
+                  }
+                }}
+                className="overflow-x-auto pb-2 pt-2 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing select-none"
+              >
+                <div className="min-w-[850px] grid grid-cols-3 gap-8 items-center relative py-4">
+
+                  {/* Column 1: QUARTI DI FINALE */}
+                  <div className="space-y-6">
+                    <h3 className="text-center font-black text-[#F5A623] tracking-widest text-xs uppercase mb-6 flex items-center justify-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]"></span>
+                      QUARTI DI FINALE
+                    </h3>
+
+                    {/* QF 1 */}
+                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">1° Girone A</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                        <div className="border-t border-slate-800"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">4° Girone B</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* QF 2 */}
+                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">2° Girone A</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                        <div className="border-t border-slate-800"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">3° Girone B</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* QF 3 */}
+                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">3° Girone A</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                        <div className="border-t border-slate-800"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">2° Girone B</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* QF 4 */}
+                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">4° Girone A</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                        <div className="border-t border-slate-800"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">1° Girone B</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column 2: SEMIFINALI */}
+                  <div className="space-y-16 flex flex-col justify-center">
+                    <h3 className="text-center font-black text-[#F5A623] tracking-widest text-xs uppercase mb-2 flex items-center justify-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]"></span>
+                      SEMIFINALI
+                    </h3>
+
+                    {/* SF 1 */}
+                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">Vincitore QF1</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                        <div className="border-t border-slate-800"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">Vincitore QF3</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SF 2 */}
+                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">Vincitore QF2</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                        <div className="border-t border-slate-800"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-400 font-medium truncate">Vincitore QF4</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column 3: GRAN FINALE */}
+                  <div className="flex flex-col justify-center">
+                    <h3 className="text-center font-black text-[#F5A623] tracking-widest text-xs uppercase mb-6 flex items-center justify-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]"></span>
+                      GRAN FINALE
+                    </h3>
+
+                    {/* FINALE */}
+                    <div className="relative bg-[#172347] border-2 border-[#F5A623] shadow-[0_0_20px_rgba(245,166,35,0.35)] rounded p-3.5 text-xs">
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-[#F5A623]/60 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-300 font-medium truncate">Vincitore SF1</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                        <div className="border-t border-slate-700/80"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-[#F5A623]/60 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                            <span className="italic text-slate-300 font-medium truncate">Vincitore SF2</span>
+                          </div>
+                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Custom Gold Scrollbar Bar for Playoff Bracket (With Mouse Drag & Drop Control) */}
+              <div className="mt-3 flex items-center space-x-2 px-1">
+                <span className="text-[#F5A623] text-xs select-none p-1 flex-shrink-0 font-bold">
+                  ◀
+                </span>
+                <div 
+                  onMouseDown={(e) => {
+                    const scrollBox = document.getElementById('finale-scroll-[#F5A623]');
+                    const scrollBoxEl = document.getElementById('finale-scroll-box');
+                    if (!scrollBoxEl) return;
+
+                    const track = e.currentTarget;
+                    const rect = track.getBoundingClientRect();
+                    const startX = e.clientX;
+
+                    const clickRatio = Math.max(0, Math.min(1, (startX - rect.left) / rect.width));
+                    const maxScroll = scrollBoxEl.scrollWidth - scrollBoxEl.clientWidth;
+                    scrollBoxEl.scrollLeft = clickRatio * maxScroll;
+                    const initialScrollLeft = scrollBoxEl.scrollLeft;
+
+                    const onMouseMove = (moveEvent: MouseEvent) => {
+                      const deltaX = moveEvent.clientX - startX;
+                      const scrollDelta = (deltaX / rect.width) * maxScroll;
+                      scrollBoxEl.scrollLeft = initialScrollLeft + scrollDelta;
+                    };
+
+                    const onMouseUp = () => {
+                      window.removeEventListener('mousemove', onMouseMove);
+                      window.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+                  }}
+                  className="flex-1 h-2 bg-[#F5A623]/20 rounded-full cursor-grab active:cursor-grabbing relative overflow-hidden select-none py-0.5"
+                  title="Trascina la barra per scorrere il tabellone"
+                >
+                  <div 
+                    className="h-full bg-[#F5A623] rounded-full shadow-[0_0_10px_#F5A623] transition-all duration-75"
+                    style={{
+                      width: '60%',
+                      marginLeft: '0%'
+                    }}
+                    id="finale-scroll-thumb"
+                  ></div>
+                </div>
+                <span className="text-[#F5A623] text-xs select-none p-1 flex-shrink-0 font-bold">
+                  ▶
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className={activeTab === 'calendario' ? 'block' : 'hidden'}>

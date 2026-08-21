@@ -38,6 +38,8 @@ const FILE_LIST_TTL = 10 * 60 * 1000; // 10 minuti
 const imageBufferCacheMap = new Map<string, ImageBufferCache>();
 const IMAGE_BUFFER_TTL = 60 * 60 * 1000; // 1 ora
 
+const scopes = ['https://www.googleapis.com/auth/drive.readonly'];
+
 const getAuth = () => {
   try {
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {

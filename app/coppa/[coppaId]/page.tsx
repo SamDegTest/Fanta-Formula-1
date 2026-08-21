@@ -1,10 +1,5 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import React from 'react';
-import CoppaPage from '../page';
-
-const CoppaDashboardPage = () => {
-  return <CoppaPage />;
-};
-
-export default CoppaDashboardPage;
+export default function CoppaIdPage() {
+  redirect('/');
+}
