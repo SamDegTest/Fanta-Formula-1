@@ -93,9 +93,9 @@ export const GIRONE_A_CALENDAR: GroupMatchday[] = [
     date: "06/09",
     restingTeam: "G. Mazzoni Gufo Racing",
     matches: [
-      { teamA: "Cavallino Arrapante", teamB: "MERDECESS AMG FORMULA 1 TEAM", scoreA: null, scoreB: null },
-      { teamA: "Habibi motorsport F1 team", teamB: "Beavers", scoreA: null, scoreB: null },
-      { teamA: "AvvocatoSenior F1 team", teamB: "Legione del centauro", scoreA: null, scoreB: null }
+      { teamA: "MERDECESS AMG FORMULA 1 TEAM", teamB: "AvvocatoSenior F1 team", scoreA: null, scoreB: null },
+      { teamA: "Cavallino Arrapante", teamB: "Legione del centauro", scoreA: null, scoreB: null },
+      { teamA: "Habibi motorsport F1 team", teamB: "Beavers", scoreA: null, scoreB: null }
     ]
   },
   {
@@ -104,9 +104,9 @@ export const GIRONE_A_CALENDAR: GroupMatchday[] = [
     date: "13/09",
     restingTeam: "AvvocatoSenior F1 team",
     matches: [
-      { teamA: "Legione del centauro", teamB: "Habibi motorsport F1 team", scoreA: null, scoreB: null },
-      { teamA: "Beavers", teamB: "Cavallino Arrapante", scoreA: null, scoreB: null },
-      { teamA: "MERDECESS AMG FORMULA 1 TEAM", teamB: "G. Mazzoni Gufo Racing", scoreA: null, scoreB: null }
+      { teamA: "MERDECESS AMG FORMULA 1 TEAM", teamB: "Cavallino Arrapante", scoreA: null, scoreB: null },
+      { teamA: "Habibi motorsport F1 team", teamB: "Legione del centauro", scoreA: null, scoreB: null },
+      { teamA: "G. Mazzoni Gufo Racing", teamB: "Beavers", scoreA: null, scoreB: null }
     ]
   },
   {
@@ -115,9 +115,9 @@ export const GIRONE_A_CALENDAR: GroupMatchday[] = [
     date: "26/09",
     restingTeam: "MERDECESS AMG FORMULA 1 TEAM",
     matches: [
-      { teamA: "G. Mazzoni Gufo Racing", teamB: "Beavers", scoreA: null, scoreB: null },
-      { teamA: "Cavallino Arrapante", teamB: "Legione del centauro", scoreA: null, scoreB: null },
-      { teamA: "Habibi motorsport F1 team", teamB: "AvvocatoSenior F1 team", scoreA: null, scoreB: null }
+      { teamA: "Habibi motorsport F1 team", teamB: "AvvocatoSenior F1 team", scoreA: null, scoreB: null },
+      { teamA: "G. Mazzoni Gufo Racing", teamB: "Cavallino Arrapante", scoreA: null, scoreB: null },
+      { teamA: "Legione del centauro", teamB: "Beavers", scoreA: null, scoreB: null }
     ]
   }
 ];
