@@ -11,6 +11,7 @@ import {
   GIRONE_A_CALENDAR,
   GIRONE_B_CALENDAR,
   CUP_TIMELINE,
+  PLAYOFF_BRACKET,
   calculateCupMatchResult,
   calculateGroupStandings
 } from '../lib/coppa';
@@ -61,14 +62,30 @@ const BOOSTER_TYPES = [
   { id: 'extra_driver', name: 'Extra Driver', icon: PieChart, color: 'text-green-300', bg: 'bg-green-900/50', border: 'border-green-500/50' },
 ];
 
+const DEFAULT_LEADERBOARD = [
+  { username: 'domenico ghionda', name: 'Habibi motorsport F1 team', totalScore: 8785, rank: 1 },
+  { username: 'gianluca tunzi', name: 'Tunzi Hyperflux Racing', totalScore: 8198, rank: 2 },
+  { username: 'Piergiorgio Tunzi', name: 'Alette', totalScore: 8197, rank: 3 },
+  { username: 'federico russo', name: 'AvvocatoSenior F1 team', totalScore: 7901, rank: 4 },
+  { username: 'Francesco Tullo', name: 'MERDECESS AMG FORMULA 1 TEAM', totalScore: 7767, rank: 5 },
+  { username: 'raul sisto', name: 'Legione del centauro', totalScore: 7604, rank: 6 },
+  { username: 'Davide Milella', name: 'Cavallino Arrapante', totalScore: 7367, rank: 7 },
+  { username: 'Vittorio Sisto', name: 'Beavers', totalScore: 7172, rank: 8 },
+  { username: 'Valerio Maniscalco', name: 'Speed and Power', totalScore: 7124, rank: 9 },
+  { username: 'Christian Busco', name: 'Dinoco F1 team', totalScore: 6822, rank: 10 },
+  { username: 'elena russo', name: 'Nenacrochet', totalScore: 6670, rank: 11 },
+  { username: 'Luca Siciliani', name: 'Scuderia Sbinnati', totalScore: 6236, rank: 12 },
+  { username: 'Eryk Karwasinskí', name: 'G. Mazzoni Gufo Racing', totalScore: 5518, rank: 13 }
+];
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'generale' | 'coppa' | 'calendario'>('coppa');
 
   // API States
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [syncResult, setSyncResult] = useState<any>(null);
-  const [realStandings, setRealStandings] = useState<any[]>([]);
+  const [syncResult, setSyncResult] = useState<any>({ leagueName: 'PISTON LEAGUE' });
+  const [realStandings, setRealStandings] = useState<any[]>(DEFAULT_LEADERBOARD);
 
   // Calendar States
   const [calendarData, setCalendarData] = useState<any[]>([]);
@@ -302,7 +319,7 @@ function DashboardContent() {
                 TIMELINE GARE CRICCHETTO CUP
               </span>
               <span className="text-[10px] sm:text-xs font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/50 px-3 py-1 rounded-full">
-                GARE DISPUTATE: 4 / 16 GP
+                GARE DISPUTATE: {CUP_TIMELINE.filter(t => t.isPlayed).length} / {CUP_TIMELINE.length} GP
               </span>
             </div>
 
@@ -405,7 +422,8 @@ function DashboardContent() {
                   };
                   const code = countryMap[item.gp] || 'un';
                   const isPausa = item.stage === 'PAUSA';
-                  const isNextGironeGP = item.gp === 'ITALIA';
+                  const firstUnplayedGP = CUP_TIMELINE.find(t => !t.isPlayed && t.stage !== 'PAUSA')?.gp;
+                  const isNextGironeGP = !item.isPlayed && item.gp === firstUnplayedGP;
                   const isPlayedGirone = item.isPlayed && !isPausa;
 
                   return (
@@ -571,10 +589,11 @@ function DashboardContent() {
                           <tr>
                             <th className="px-3 py-2.5">SQUADRA</th>
                             <th className="px-2 py-2.5 text-center font-black text-[#F5A623]">PTS</th>
-                            <th className="px-2 py-2.5 text-center">G</th>
-                            <th className="px-2 py-2.5 text-center">V</th>
-                            <th className="px-2 py-2.5 text-center">N</th>
-                            <th className="px-2 py-2.5 text-center">P</th>
+                            <th className="px-1.5 py-2.5 text-center font-mono">DIFF</th>
+                            <th className="px-1.5 py-2.5 text-center">G</th>
+                            <th className="px-1.5 py-2.5 text-center">V</th>
+                            <th className="px-1.5 py-2.5 text-center">N</th>
+                            <th className="px-1.5 py-2.5 text-center">P</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -614,10 +633,13 @@ function DashboardContent() {
                                       {row.cupPoints}
                                     </span>
                                   </td>
-                                  <td className="px-2 py-3 text-center font-mono text-slate-300 font-medium">{row.played}</td>
-                                  <td className="px-2 py-3 text-center font-mono text-emerald-400 font-bold">{row.won}</td>
-                                  <td className="px-2 py-3 text-center font-mono text-emerald-400 font-bold">{row.drawn}</td>
-                                  <td className="px-2 py-3 text-center font-mono text-red-400 font-bold">{row.lost}</td>
+                                  <td className="px-1.5 py-3 text-center font-mono text-[11px] font-bold text-slate-300">
+                                    {row.diffPoints > 0 ? `+${row.diffPoints}` : row.diffPoints}
+                                  </td>
+                                  <td className="px-1.5 py-3 text-center font-mono text-slate-300 font-medium">{row.played}</td>
+                                  <td className="px-1.5 py-3 text-center font-mono text-emerald-400 font-bold">{row.won}</td>
+                                  <td className="px-1.5 py-3 text-center font-mono text-emerald-400 font-bold">{row.drawn}</td>
+                                  <td className="px-1.5 py-3 text-center font-mono text-red-400 font-bold">{row.lost}</td>
                                 </tr>
                               );
                             });
@@ -817,157 +839,123 @@ function DashboardContent() {
                 <div className="min-w-[850px] grid grid-cols-3 gap-8 items-center relative py-4">
 
                   {/* Column 1: QUARTI DI FINALE */}
-                  <div className="space-y-6">
-                    <h3 className="text-center font-black text-[#F5A623] tracking-widest text-xs uppercase mb-6 flex items-center justify-center gap-2">
+                  <div className="space-y-4">
+                    <h3 className="text-center font-black text-[#F5A623] tracking-widest text-xs uppercase mb-4 flex items-center justify-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]"></span>
                       QUARTI DI FINALE
                     </h3>
 
-                    {/* QF 1 */}
-                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
-                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
-                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">1° Girone A</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
-                        </div>
-                        <div className="border-t border-slate-800"></div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">4° Girone B</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
-                        </div>
-                      </div>
-                    </div>
+                    {PLAYOFF_BRACKET.quarterFinals.map((qf) => (
+                      <div key={qf.id} className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-[#F5A623]/60 group">
+                        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
 
-                    {/* QF 2 */}
-                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
-                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
-                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">2° Girone A</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 mb-2 border-b border-slate-700/60 pb-1.5">
+                          <span className="text-[#F5A623] font-black">{qf.name}</span>
+                          <span className="text-slate-400 font-semibold">{qf.andataDate} & {qf.ritornoDate}</span>
                         </div>
-                        <div className="border-t border-slate-800"></div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">3° Girone B</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* QF 3 */}
-                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
-                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
-                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">3° Girone A</span>
+                        <div className="space-y-2.5">
+                          {/* Team A */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <div className="w-6 h-6 rounded-full border border-[#F5A623]/60 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                                <img
+                                  src={`/api/drive-images?type=team&name=${encodeURIComponent(qf.teamA)}&v=1`}
+                                  alt={qf.teamA}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover"
+                                  onError={(e: any) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-white font-bold truncate text-[11px] leading-tight">{qf.teamA}</span>
+                                <span className="text-[9px] text-[#F5A623] font-medium leading-tight">{qf.teamALabel}</span>
+                              </div>
+                            </div>
+                            <span className="font-mono font-bold text-slate-400 ml-2">-</span>
                           </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
-                        </div>
-                        <div className="border-t border-slate-800"></div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">2° Girone B</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* QF 4 */}
-                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
-                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
-                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">4° Girone A</span>
+                          <div className="border-t border-slate-800"></div>
+
+                          {/* Team B */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <div className="w-6 h-6 rounded-full border border-[#F5A623]/60 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                                <img
+                                  src={`/api/drive-images?type=team&name=${encodeURIComponent(qf.teamB)}&v=1`}
+                                  alt={qf.teamB}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover"
+                                  onError={(e: any) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-white font-bold truncate text-[11px] leading-tight">{qf.teamB}</span>
+                                <span className="text-[9px] text-[#F5A623] font-medium leading-tight">{qf.teamBLabel}</span>
+                              </div>
+                            </div>
+                            <span className="font-mono font-bold text-slate-400 ml-2">-</span>
                           </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
                         </div>
-                        <div className="border-t border-slate-800"></div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">1° Girone B</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+
+                        <div className="mt-2.5 pt-1.5 border-t border-slate-800/80 text-[9px] text-slate-400 flex justify-between items-center font-mono">
+                          <span>AND: {qf.andataGp}</span>
+                          <span>RIT: {qf.ritornoGp}</span>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
 
                   {/* Column 2: SEMIFINALI */}
-                  <div className="space-y-16 flex flex-col justify-center">
+                  <div className="space-y-12 flex flex-col justify-center">
                     <h3 className="text-center font-black text-[#F5A623] tracking-widest text-xs uppercase mb-2 flex items-center justify-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]"></span>
                       SEMIFINALI
                     </h3>
 
-                    {/* SF 1 */}
-                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
-                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
-                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">Vincitore QF1</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
-                        </div>
-                        <div className="border-t border-slate-800"></div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">Vincitore QF3</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
-                        </div>
-                      </div>
-                    </div>
+                    {PLAYOFF_BRACKET.semiFinals.map((sf) => (
+                      <div key={sf.id} className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-[#F5A623]/60 group">
+                        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
 
-                    {/* SF 2 */}
-                    <div className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-slate-600">
-                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
-                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">Vincitore QF2</span>
-                          </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                        <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 mb-2 border-b border-slate-700/60 pb-1.5">
+                          <span className="text-[#F5A623] font-black">{sf.name}</span>
+                          <span className="text-slate-400 font-semibold">{sf.andataDate} & {sf.ritornoDate}</span>
                         </div>
-                        <div className="border-t border-slate-800"></div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-400 font-medium truncate">Vincitore QF4</span>
+
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="italic text-slate-300 font-medium truncate text-[11px] leading-tight">{sf.teamA}</span>
+                                <span className="text-[9px] text-slate-400 leading-tight">({sf.teamALabel})</span>
+                              </div>
+                            </div>
+                            <span className="font-mono font-bold text-slate-400 ml-2">-</span>
                           </div>
-                          <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+
+                          <div className="border-t border-slate-800"></div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="italic text-slate-300 font-medium truncate text-[11px] leading-tight">{sf.teamB}</span>
+                                <span className="text-[9px] text-slate-400 leading-tight">({sf.teamBLabel})</span>
+                              </div>
+                            </div>
+                            <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-2.5 pt-1.5 border-t border-slate-800/80 text-[9px] text-slate-400 flex justify-between items-center font-mono">
+                          <span>AND: {sf.andataGp}</span>
+                          <span>RIT: {sf.ritornoGp}</span>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
 
                   {/* Column 3: GRAN FINALE */}
@@ -981,11 +969,17 @@ function DashboardContent() {
                     <div className="relative bg-[#172347] border-2 border-[#F5A623] shadow-[0_0_20px_rgba(245,166,35,0.35)] rounded p-3.5 text-xs">
                       <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
                       <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+
+                      <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 mb-2 border-b border-slate-700/80 pb-1.5">
+                        <span className="text-[#F5A623] font-black">{PLAYOFF_BRACKET.final.name}</span>
+                        <span className="text-amber-300 font-semibold">{PLAYOFF_BRACKET.final.andataDate}</span>
+                      </div>
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2.5 min-w-0">
                             <div className="w-6 h-6 rounded-full bg-slate-800 border border-[#F5A623]/60 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-300 font-medium truncate">Vincitore SF1</span>
+                            <span className="italic text-slate-200 font-medium truncate">{PLAYOFF_BRACKET.final.teamA}</span>
                           </div>
                           <span className="font-mono font-bold text-slate-400 ml-2">-</span>
                         </div>
@@ -993,10 +987,15 @@ function DashboardContent() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2.5 min-w-0">
                             <div className="w-6 h-6 rounded-full bg-slate-800 border border-[#F5A623]/60 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                            <span className="italic text-slate-300 font-medium truncate">Vincitore SF2</span>
+                            <span className="italic text-slate-200 font-medium truncate">{PLAYOFF_BRACKET.final.teamB}</span>
                           </div>
                           <span className="font-mono font-bold text-slate-400 ml-2">-</span>
                         </div>
+                      </div>
+
+                      <div className="mt-3 pt-2 border-t border-slate-700/80 text-[10px] text-amber-400/90 flex justify-between items-center font-mono">
+                        <span>SEDE: {PLAYOFF_BRACKET.final.andataGp}</span>
+                        <span className="font-bold uppercase tracking-wider text-emerald-400">GARA SECCA</span>
                       </div>
                     </div>
                   </div>
@@ -1372,7 +1371,16 @@ function DashboardContent() {
                         </td>
 
                         <td className="px-1 py-4 sm:px-6 sm:py-6 text-center font-mono text-base sm:text-2xl font-black text-[#F5A623] drop-shadow-sm whitespace-nowrap align-middle">
-                          {Math.round(row.totalScore)}
+                          <div className="flex flex-col items-center justify-center">
+                            <span>{Math.round(row.totalScore)}</span>
+                            {idx === 0 ? (
+                              <span className="text-[10px] sm:text-xs font-mono font-bold text-amber-400 tracking-wider">LEADER</span>
+                            ) : (
+                              <span className="text-[10px] sm:text-xs font-mono font-bold text-rose-400">
+                                ({Math.round(row.totalScore - (realStandings[0]?.totalScore || row.totalScore))})
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
