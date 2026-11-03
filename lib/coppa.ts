@@ -187,10 +187,10 @@ export const CUP_TIMELINE = [
   { gp: "SPAGNA 2", date: "13/09", stage: "GIRONE", round: 8, isPlayed: true, label: "GIRONE 6" },
   { gp: "AZERBAIGIAN", date: "26/09", stage: "GIRONE", round: 9, isPlayed: true, label: "GIRONE 7 (A)" },
   { gp: "SINGAPORE", date: "11/10", stage: "PAUSA", round: 10, isPlayed: true, label: "PAUSA" },
-  { gp: "STATI UNITI", date: "25/10", stage: "QUARTI", round: 11, isPlayed: false, label: "QUARTI" },
-  { gp: "MESSICO", date: "01/11", stage: "QUARTI", round: 12, isPlayed: false, label: "QUARTI" },
-  { gp: "BRASILE", date: "08/11", stage: "SEMIFINALE", round: 13, isPlayed: false, label: "SEMIFINALE" },
-  { gp: "LAS VEGAS", date: "22/11", stage: "SEMIFINALE", round: 14, isPlayed: false, label: "SEMIFINALE" },
+  { gp: "STATI UNITI", date: "25/10", stage: "QUARTI", round: 11, isPlayed: true, label: "QUARTI (AND)" },
+  { gp: "MESSICO", date: "01/11", stage: "QUARTI", round: 12, isPlayed: true, label: "QUARTI (RIT)" },
+  { gp: "BRASILE", date: "08/11", stage: "SEMIFINALE", round: 13, isPlayed: false, label: "SEMIFINALE (AND)" },
+  { gp: "LAS VEGAS", date: "22/11", stage: "SEMIFINALE", round: 14, isPlayed: false, label: "SEMIFINALE (RIT)" },
   { gp: "QATAR", date: "29/11", stage: "PAUSA", round: 15, isPlayed: false, label: "PAUSA" },
   { gp: "ABU DHABI", date: "06/12", stage: "FINALE", round: 16, isPlayed: false, label: "FINALE" }
 ];
@@ -363,6 +363,15 @@ export interface PlayoffMatchConfig {
   scoreAndataB?: number | null;
   scoreRitornoA?: number | null;
   scoreRitornoB?: number | null;
+  ptsAndataA?: number | null;
+  ptsAndataB?: number | null;
+  ptsRitornoA?: number | null;
+  ptsRitornoB?: number | null;
+  aggPtsA?: number | null;
+  aggPtsB?: number | null;
+  diffAndata?: number | null;
+  diffRitorno?: number | null;
+  aggregate?: string | null;
   winner?: string | null;
 }
 
@@ -383,11 +392,20 @@ export const PLAYOFF_BRACKET: {
       teamB: "Scuderia Sbinnati",
       teamALabel: "1° Girone A",
       teamBLabel: "4° Girone B",
-      scoreAndataA: null,
-      scoreAndataB: null,
-      scoreRitornoA: null,
-      scoreRitornoB: null,
-      winner: null
+      scoreAndataA: 490,
+      scoreAndataB: 374,
+      scoreRitornoA: 414,
+      scoreRitornoB: 339,
+      ptsAndataA: 3,
+      ptsAndataB: 0,
+      ptsRitornoA: 3,
+      ptsRitornoB: 0,
+      aggPtsA: 6,
+      aggPtsB: 0,
+      diffAndata: 116,
+      diffRitorno: 75,
+      aggregate: "6-0",
+      winner: "Habibi motorsport F1 team"
     },
     {
       id: "QF2",
@@ -400,11 +418,20 @@ export const PLAYOFF_BRACKET: {
       teamB: "Alette",
       teamALabel: "2° Girone A",
       teamBLabel: "3° Girone B",
-      scoreAndataA: null,
-      scoreAndataB: null,
-      scoreRitornoA: null,
-      scoreRitornoB: null,
-      winner: null
+      scoreAndataA: 400,
+      scoreAndataB: 431,
+      scoreRitornoA: 284,
+      scoreRitornoB: 379,
+      ptsAndataA: 1,
+      ptsAndataB: 2,
+      ptsRitornoA: 0,
+      ptsRitornoB: 3,
+      aggPtsA: 1,
+      aggPtsB: 5,
+      diffAndata: -31,
+      diffRitorno: -95,
+      aggregate: "1-5",
+      winner: "Alette"
     },
     {
       id: "QF3",
@@ -417,11 +444,20 @@ export const PLAYOFF_BRACKET: {
       teamB: "Speed and Power",
       teamALabel: "3° Girone A",
       teamBLabel: "2° Girone B",
-      scoreAndataA: null,
-      scoreAndataB: null,
-      scoreRitornoA: null,
-      scoreRitornoB: null,
-      winner: null
+      scoreAndataA: 399,
+      scoreAndataB: 395,
+      scoreRitornoA: 391,
+      scoreRitornoB: 380,
+      ptsAndataA: 2,
+      ptsAndataB: 1,
+      ptsRitornoA: 2,
+      ptsRitornoB: 1,
+      aggPtsA: 4,
+      aggPtsB: 2,
+      diffAndata: 4,
+      diffRitorno: 11,
+      aggregate: "4-2",
+      winner: "MERDECESS AMG FORMULA 1 TEAM"
     },
     {
       id: "QF4",
@@ -434,11 +470,20 @@ export const PLAYOFF_BRACKET: {
       teamB: "Tunzi Hyperflux Racing",
       teamALabel: "4° Girone A",
       teamBLabel: "1° Girone B",
-      scoreAndataA: null,
-      scoreAndataB: null,
-      scoreRitornoA: null,
-      scoreRitornoB: null,
-      winner: null
+      scoreAndataA: 407,
+      scoreAndataB: 412,
+      scoreRitornoA: 224,
+      scoreRitornoB: 370,
+      ptsAndataA: 1,
+      ptsAndataB: 2,
+      ptsRitornoA: 0,
+      ptsRitornoB: 3,
+      aggPtsA: 1,
+      aggPtsB: 5,
+      diffAndata: -5,
+      diffRitorno: -146,
+      aggregate: "1-5",
+      winner: "Tunzi Hyperflux Racing"
     }
   ],
   semiFinals: [
@@ -449,10 +494,10 @@ export const PLAYOFF_BRACKET: {
       andataDate: "08/11",
       ritornoGp: "LAS VEGAS",
       ritornoDate: "22/11",
-      teamA: "Vincitore QF1",
-      teamB: "Vincitore QF2",
-      teamALabel: "Habibi / Sbinnati",
-      teamBLabel: "Cavallino / Alette",
+      teamA: "Habibi motorsport F1 team",
+      teamB: "Alette",
+      teamALabel: "Vincitore QF1",
+      teamBLabel: "Vincitore QF2",
       scoreAndataA: null,
       scoreAndataB: null,
       scoreRitornoA: null,
@@ -466,10 +511,10 @@ export const PLAYOFF_BRACKET: {
       andataDate: "08/11",
       ritornoGp: "LAS VEGAS",
       ritornoDate: "22/11",
-      teamA: "Vincitore QF3",
-      teamB: "Vincitore QF4",
-      teamALabel: "Merdecess / Speed",
-      teamBLabel: "Avvocato / Tunzi",
+      teamA: "MERDECESS AMG FORMULA 1 TEAM",
+      teamB: "Tunzi Hyperflux Racing",
+      teamALabel: "Vincitore QF3",
+      teamBLabel: "Vincitore QF4",
       scoreAndataA: null,
       scoreAndataB: null,
       scoreRitornoA: null,

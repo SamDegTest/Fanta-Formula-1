@@ -63,19 +63,19 @@ const BOOSTER_TYPES = [
 ];
 
 const DEFAULT_LEADERBOARD = [
-  { username: 'domenico ghionda', name: 'Habibi motorsport F1 team', totalScore: 8785, rank: 1 },
-  { username: 'gianluca tunzi', name: 'Tunzi Hyperflux Racing', totalScore: 8198, rank: 2 },
-  { username: 'Piergiorgio Tunzi', name: 'Alette', totalScore: 8197, rank: 3 },
-  { username: 'federico russo', name: 'AvvocatoSenior F1 team', totalScore: 7901, rank: 4 },
-  { username: 'Francesco Tullo', name: 'MERDECESS AMG FORMULA 1 TEAM', totalScore: 7767, rank: 5 },
-  { username: 'raul sisto', name: 'Legione del centauro', totalScore: 7604, rank: 6 },
-  { username: 'Davide Milella', name: 'Cavallino Arrapante', totalScore: 7367, rank: 7 },
-  { username: 'Vittorio Sisto', name: 'Beavers', totalScore: 7172, rank: 8 },
-  { username: 'Valerio Maniscalco', name: 'Speed and Power', totalScore: 7124, rank: 9 },
-  { username: 'Christian Busco', name: 'Dinoco F1 team', totalScore: 6822, rank: 10 },
-  { username: 'elena russo', name: 'Nenacrochet', totalScore: 6670, rank: 11 },
-  { username: 'Luca Siciliani', name: 'Scuderia Sbinnati', totalScore: 6236, rank: 12 },
-  { username: 'Eryk Karwasinskí', name: 'G. Mazzoni Gufo Racing', totalScore: 5518, rank: 13 }
+  { username: 'domenico ghionda', name: 'Habibi motorsport F1 team', totalScore: 9689, rank: 1 },
+  { username: 'Piergiorgio Tunzi', name: 'Alette', totalScore: 9007, rank: 2 },
+  { username: 'gianluca tunzi', name: 'Tunzi Hyperflux Racing', totalScore: 8980, rank: 3 },
+  { username: 'Francesco Tullo', name: 'MERDECESS AMG FORMULA 1 TEAM', totalScore: 8557, rank: 4 },
+  { username: 'federico russo', name: 'AvvocatoSenior F1 team', totalScore: 8532, rank: 5 },
+  { username: 'raul sisto', name: 'Legione del centauro', totalScore: 8307, rank: 6 },
+  { username: 'Davide Milella', name: 'Cavallino Arrapante', totalScore: 8048, rank: 7 },
+  { username: 'Vittorio Sisto', name: 'Beavers', totalScore: 7921, rank: 8 },
+  { username: 'Valerio Maniscalco', name: 'Speed and Power', totalScore: 7899, rank: 9 },
+  { username: 'elena russo', name: 'Nenacrochet', totalScore: 7408, rank: 10 },
+  { username: 'Christian Busco', name: 'Dinoco F1 team', totalScore: 7375, rank: 11 },
+  { username: 'Luca Siciliani', name: 'Scuderia Sbinnati', totalScore: 6949, rank: 12 },
+  { username: 'Eryk Karwasinskí', name: 'G. Mazzoni Gufo Racing', totalScore: 6068, rank: 13 }
 ];
 
 function DashboardContent() {
@@ -93,7 +93,7 @@ function DashboardContent() {
 
   // Coppa States
   const [coppaGroup, setCoppaGroup] = useState<'A' | 'B'>('A');
-  const [coppaPhase, setCoppaPhase] = useState<'gironi' | 'finale'>('gironi');
+  const [coppaPhase, setCoppaPhase] = useState<'gironi' | 'finale'>('finale');
   const [coppaMatchdayA, setCoppaMatchdayA] = useState<number>(1);
   const [coppaMatchdayB, setCoppaMatchdayB] = useState<number>(1);
 
@@ -306,7 +306,7 @@ function DashboardContent() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs font-mono font-bold text-[#F5A623] bg-[#F5A623]/10 border border-[#F5A623]/30 px-3 py-1.5 rounded-full uppercase">
-                FASE A GIRONI IN CORSO
+                FASE FINALE IN CORSO - SEMIFINALI
               </span>
             </div>
           </div>
@@ -836,126 +836,240 @@ function DashboardContent() {
                 }}
                 className="overflow-x-auto pb-2 pt-2 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing select-none"
               >
-                <div className="min-w-[850px] grid grid-cols-3 gap-8 items-center relative py-4">
+                <div className="min-w-[980px] grid grid-cols-3 gap-8 items-start relative py-4">
 
                   {/* Column 1: QUARTI DI FINALE */}
                   <div className="space-y-4">
                     <h3 className="text-center font-black text-[#F5A623] tracking-widest text-xs uppercase mb-4 flex items-center justify-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]"></span>
-                      QUARTI DI FINALE
+                      QUARTI DI FINALE (ANDATA & RITORNO)
                     </h3>
 
-                    {PLAYOFF_BRACKET.quarterFinals.map((qf) => (
-                      <div key={qf.id} className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-[#F5A623]/60 group">
-                        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
-                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                    {PLAYOFF_BRACKET.quarterFinals.map((qf) => {
+                      const isWinnerA = qf.winner === qf.teamA;
+                      const isWinnerB = qf.winner === qf.teamB;
+                      const hasPlayed = qf.scoreAndataA !== null && qf.scoreRitornoA !== null;
 
-                        <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 mb-2 border-b border-slate-700/60 pb-1.5">
-                          <span className="text-[#F5A623] font-black">{qf.name}</span>
-                          <span className="text-slate-400 font-semibold">{qf.andataDate} & {qf.ritornoDate}</span>
-                        </div>
+                      return (
+                        <div key={qf.id} className="relative bg-[#131C38] border border-slate-700/80 rounded-lg p-3 text-xs shadow-lg transition-all hover:border-[#F5A623]/60 group">
+                          <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                          <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
 
-                        <div className="space-y-2.5">
-                          {/* Team A */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2.5 min-w-0">
-                              <div className="w-6 h-6 rounded-full border border-[#F5A623]/60 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
-                                <img
-                                  src={`/api/drive-images?type=team&name=${encodeURIComponent(qf.teamA)}&v=1`}
-                                  alt={qf.teamA}
-                                  loading="lazy"
-                                  className="w-full h-full object-cover"
-                                  onError={(e: any) => { e.target.style.display = 'none'; }}
-                                />
-                              </div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-white font-bold truncate text-[11px] leading-tight">{qf.teamA}</span>
-                                <span className="text-[9px] text-[#F5A623] font-medium leading-tight">{qf.teamALabel}</span>
-                              </div>
-                            </div>
-                            <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                          <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 mb-2 border-b border-slate-700/60 pb-1.5">
+                            <span className="text-[#F5A623] font-black">{qf.name}</span>
+                            {hasPlayed ? (
+                              <span className="bg-emerald-950 text-emerald-300 border border-emerald-500/50 px-2 py-0.5 rounded text-[9px] font-black tracking-wider shadow-sm">
+                                AGGREGATO: {qf.aggPtsA} - {qf.aggPtsB}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 font-semibold">{qf.andataDate} & {qf.ritornoDate}</span>
+                            )}
                           </div>
 
-                          <div className="border-t border-slate-800"></div>
-
-                          {/* Team B */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2.5 min-w-0">
-                              <div className="w-6 h-6 rounded-full border border-[#F5A623]/60 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
-                                <img
-                                  src={`/api/drive-images?type=team&name=${encodeURIComponent(qf.teamB)}&v=1`}
-                                  alt={qf.teamB}
-                                  loading="lazy"
-                                  className="w-full h-full object-cover"
-                                  onError={(e: any) => { e.target.style.display = 'none'; }}
-                                />
+                          <div className="space-y-2">
+                            {/* Team A */}
+                            <div className={`flex items-center justify-between p-1.5 rounded transition-colors ${
+                              isWinnerA ? 'bg-[#F5A623]/15 border-l-2 border-l-[#F5A623]' : isWinnerB ? 'opacity-60' : ''
+                            }`}>
+                              <div className="flex items-center space-x-2.5 min-w-0">
+                                <div className={`w-7 h-7 rounded-full border ${isWinnerA ? 'border-[#F5A623]' : 'border-slate-700'} bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm`}>
+                                  <img
+                                    src={`/api/drive-images?type=team&name=${encodeURIComponent(qf.teamA)}&v=1`}
+                                    alt={qf.teamA}
+                                    loading="lazy"
+                                    className="w-full h-full object-cover"
+                                    onError={(e: any) => { e.target.style.display = 'none'; }}
+                                  />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <span className={`font-bold truncate text-[11px] leading-tight ${isWinnerA ? 'text-[#F5A623]' : 'text-white'}`}>
+                                    {qf.teamA} {isWinnerA && '🏆'}
+                                  </span>
+                                  <span className="text-[9px] text-[#F5A623]/80 font-medium leading-tight">{qf.teamALabel}</span>
+                                </div>
                               </div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-white font-bold truncate text-[11px] leading-tight">{qf.teamB}</span>
-                                <span className="text-[9px] text-[#F5A623] font-medium leading-tight">{qf.teamBLabel}</span>
+                              <div className="flex items-center ml-2 flex-shrink-0">
+                                {hasPlayed ? (
+                                  <span className={`font-mono text-xs font-black px-2 py-0.5 rounded ${
+                                    isWinnerA ? 'bg-[#F5A623] text-[#0B132B]' : 'bg-slate-800 text-slate-400'
+                                  }`}>
+                                    {qf.aggPtsA} PT
+                                  </span>
+                                ) : (
+                                  <span className="font-mono font-bold text-slate-400">-</span>
+                                )}
                               </div>
                             </div>
-                            <span className="font-mono font-bold text-slate-400 ml-2">-</span>
-                          </div>
-                        </div>
 
-                        <div className="mt-2.5 pt-1.5 border-t border-slate-800/80 text-[9px] text-slate-400 flex justify-between items-center font-mono">
-                          <span>AND: {qf.andataGp}</span>
-                          <span>RIT: {qf.ritornoGp}</span>
+                            <div className="border-t border-slate-800"></div>
+
+                            {/* Team B */}
+                            <div className={`flex items-center justify-between p-1.5 rounded transition-colors ${
+                              isWinnerB ? 'bg-[#F5A623]/15 border-l-2 border-l-[#F5A623]' : isWinnerA ? 'opacity-60' : ''
+                            }`}>
+                              <div className="flex items-center space-x-2.5 min-w-0">
+                                <div className={`w-7 h-7 rounded-full border ${isWinnerB ? 'border-[#F5A623]' : 'border-slate-700'} bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm`}>
+                                  <img
+                                    src={`/api/drive-images?type=team&name=${encodeURIComponent(qf.teamB)}&v=1`}
+                                    alt={qf.teamB}
+                                    loading="lazy"
+                                    className="w-full h-full object-cover"
+                                    onError={(e: any) => { e.target.style.display = 'none'; }}
+                                  />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <span className={`font-bold truncate text-[11px] leading-tight ${isWinnerB ? 'text-[#F5A623]' : 'text-white'}`}>
+                                    {qf.teamB} {isWinnerB && '🏆'}
+                                  </span>
+                                  <span className="text-[9px] text-[#F5A623]/80 font-medium leading-tight">{qf.teamBLabel}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center ml-2 flex-shrink-0">
+                                {hasPlayed ? (
+                                  <span className={`font-mono text-xs font-black px-2 py-0.5 rounded ${
+                                    isWinnerB ? 'bg-[#F5A623] text-[#0B132B]' : 'bg-slate-800 text-slate-400'
+                                  }`}>
+                                    {qf.aggPtsB} PT
+                                  </span>
+                                ) : (
+                                  <span className="font-mono font-bold text-slate-400">-</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Sezione Dettaglio Andata e Ritorno */}
+                          {hasPlayed ? (
+                            <div className="mt-2.5 pt-2 border-t border-slate-700/60 space-y-1.5 font-mono text-[10px]">
+                              {/* Andata */}
+                              <div className="flex justify-between items-center bg-[#0B1226]/90 px-2 py-1 rounded border border-slate-800">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-amber-400 text-[9px] uppercase">ANDATA</span>
+                                  <span className="text-slate-500 text-[9px]">({qf.andataGp} {qf.andataDate})</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-slate-200 font-bold">{qf.scoreAndataA} - {qf.scoreAndataB}</span>
+                                  <span className="text-amber-400 font-black">({qf.ptsAndataA}-{qf.ptsAndataB})</span>
+                                </div>
+                              </div>
+
+                              {/* Ritorno */}
+                              <div className="flex justify-between items-center bg-[#0B1226]/90 px-2 py-1 rounded border border-slate-800">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-cyan-400 text-[9px] uppercase">RITORNO</span>
+                                  <span className="text-slate-500 text-[9px]">({qf.ritornoGp} {qf.ritornoDate})</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-slate-200 font-bold">{qf.scoreRitornoA} - {qf.scoreRitornoB}</span>
+                                  <span className="text-cyan-400 font-black">({qf.ptsRitornoA}-{qf.ptsRitornoB})</span>
+                                </div>
+                              </div>
+
+                              {/* Esito Finale */}
+                              <div className="flex justify-between items-center pt-1 text-[9px] text-emerald-400 border-t border-slate-800/60">
+                                <span className="text-slate-400 uppercase font-semibold">QUALIFICATA:</span>
+                                <span className="font-black text-emerald-300 truncate max-w-[170px] text-right">
+                                  {qf.winner} (agg. {qf.aggregate})
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2.5 pt-1.5 border-t border-slate-800/80 text-[9px] text-slate-400 flex justify-between items-center font-mono">
+                              <span>AND: {qf.andataGp}</span>
+                              <span>RIT: {qf.ritornoGp}</span>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Column 2: SEMIFINALI */}
                   <div className="space-y-12 flex flex-col justify-center">
                     <h3 className="text-center font-black text-[#F5A623] tracking-widest text-xs uppercase mb-2 flex items-center justify-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]"></span>
-                      SEMIFINALI
+                      SEMIFINALI (ANDATA & RITORNO)
                     </h3>
 
-                    {PLAYOFF_BRACKET.semiFinals.map((sf) => (
-                      <div key={sf.id} className="relative bg-[#131C38] border border-slate-700/80 rounded p-3 text-xs shadow-lg transition-all hover:border-[#F5A623]/60 group">
-                        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
-                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
+                    {PLAYOFF_BRACKET.semiFinals.map((sf) => {
+                      const isTBD_A = sf.teamA.startsWith('Vincitore');
+                      const isTBD_B = sf.teamB.startsWith('Vincitore');
 
-                        <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 mb-2 border-b border-slate-700/60 pb-1.5">
-                          <span className="text-[#F5A623] font-black">{sf.name}</span>
-                          <span className="text-slate-400 font-semibold">{sf.andataDate} & {sf.ritornoDate}</span>
-                        </div>
+                      return (
+                        <div key={sf.id} className="relative bg-[#131C38] border border-slate-700/80 rounded-lg p-3 text-xs shadow-lg transition-all hover:border-[#F5A623]/60 group">
+                          <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
+                          <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
 
-                        <div className="space-y-2.5">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2.5 min-w-0">
-                              <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="italic text-slate-300 font-medium truncate text-[11px] leading-tight">{sf.teamA}</span>
-                                <span className="text-[9px] text-slate-400 leading-tight">({sf.teamALabel})</span>
-                              </div>
-                            </div>
-                            <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                          <div className="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 mb-2 border-b border-slate-700/60 pb-1.5">
+                            <span className="text-[#F5A623] font-black">{sf.name}</span>
+                            <span className="bg-amber-950/80 text-[#F5A623] border border-amber-500/40 px-2 py-0.5 rounded text-[9px] font-bold">
+                              {sf.andataDate} & {sf.ritornoDate}
+                            </span>
                           </div>
 
-                          <div className="border-t border-slate-800"></div>
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2.5 min-w-0">
-                              <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="italic text-slate-300 font-medium truncate text-[11px] leading-tight">{sf.teamB}</span>
-                                <span className="text-[9px] text-slate-400 leading-tight">({sf.teamBLabel})</span>
+                          <div className="space-y-2.5">
+                            {/* Team A */}
+                            <div className="flex items-center justify-between p-1 rounded">
+                              <div className="flex items-center space-x-2.5 min-w-0">
+                                {isTBD_A ? (
+                                  <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                                ) : (
+                                  <div className="w-7 h-7 rounded-full border border-[#F5A623]/60 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                                    <img
+                                      src={`/api/drive-images?type=team&name=${encodeURIComponent(sf.teamA)}&v=1`}
+                                      alt={sf.teamA}
+                                      loading="lazy"
+                                      className="w-full h-full object-cover"
+                                      onError={(e: any) => { e.target.style.display = 'none'; }}
+                                    />
+                                  </div>
+                                )}
+                                <div className="flex flex-col min-w-0">
+                                  <span className={`font-bold truncate text-[11px] leading-tight ${isTBD_A ? 'italic text-slate-300' : 'text-white'}`}>
+                                    {sf.teamA}
+                                  </span>
+                                  <span className="text-[9px] text-[#F5A623]/80 leading-tight">({sf.teamALabel})</span>
+                                </div>
                               </div>
+                              <span className="font-mono font-bold text-slate-400 ml-2">-</span>
                             </div>
-                            <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+
+                            <div className="border-t border-slate-800"></div>
+
+                            {/* Team B */}
+                            <div className="flex items-center justify-between p-1 rounded">
+                              <div className="flex items-center space-x-2.5 min-w-0">
+                                {isTBD_B ? (
+                                  <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0">?</div>
+                                ) : (
+                                  <div className="w-7 h-7 rounded-full border border-[#F5A623]/60 bg-[#0B1226] overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                                    <img
+                                      src={`/api/drive-images?type=team&name=${encodeURIComponent(sf.teamB)}&v=1`}
+                                      alt={sf.teamB}
+                                      loading="lazy"
+                                      className="w-full h-full object-cover"
+                                      onError={(e: any) => { e.target.style.display = 'none'; }}
+                                    />
+                                  </div>
+                                )}
+                                <div className="flex flex-col min-w-0">
+                                  <span className={`font-bold truncate text-[11px] leading-tight ${isTBD_B ? 'italic text-slate-300' : 'text-white'}`}>
+                                    {sf.teamB}
+                                  </span>
+                                  <span className="text-[9px] text-[#F5A623]/80 leading-tight">({sf.teamBLabel})</span>
+                                </div>
+                              </div>
+                              <span className="font-mono font-bold text-slate-400 ml-2">-</span>
+                            </div>
+                          </div>
+
+                          <div className="mt-2.5 pt-1.5 border-t border-slate-800/80 text-[9px] text-slate-400 flex justify-between items-center font-mono">
+                            <span>AND: {sf.andataGp} ({sf.andataDate})</span>
+                            <span>RIT: {sf.ritornoGp} ({sf.ritornoDate})</span>
                           </div>
                         </div>
-
-                        <div className="mt-2.5 pt-1.5 border-t border-slate-800/80 text-[9px] text-slate-400 flex justify-between items-center font-mono">
-                          <span>AND: {sf.andataGp}</span>
-                          <span>RIT: {sf.ritornoGp}</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Column 3: GRAN FINALE */}
@@ -966,7 +1080,7 @@ function DashboardContent() {
                     </h3>
 
                     {/* FINALE */}
-                    <div className="relative bg-[#172347] border-2 border-[#F5A623] shadow-[0_0_20px_rgba(245,166,35,0.35)] rounded p-3.5 text-xs">
+                    <div className="relative bg-[#172347] border-2 border-[#F5A623] shadow-[0_0_20px_rgba(245,166,35,0.35)] rounded-lg p-3.5 text-xs">
                       <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#F5A623]"></div>
                       <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#F5A623]"></div>
 
